@@ -9,5 +9,6 @@ dependencies = [
     "ollama>=0.6.1",
     "pydantic>=2.13.0",
     "requests>=2.33.1",
+    "ruff>=0.15.10",
     "uvicorn>=0.44.0",
 ]
