@@ -1,8 +1,9 @@
 """
 Format shape of data
 """
+from typing import Literal
 from pydantic import BaseModel
 
-class ChatRequest(BaseModel):
+class ChatMessage(BaseModel):
     message: str
-    conversation_id: str | None
+    role: str  = Literal["user", "assistant, system"]

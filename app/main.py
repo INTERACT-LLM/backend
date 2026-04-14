@@ -1,10 +1,16 @@
 """
 Init FastAPI
 """
+from fastapi import FastAPI
+from app.api.chat import router as chat_router
 
-def main():
-    print("Hello from backend!")
+def create_app() -> FastAPI:
+    app = FastAPI()
+
+    # add chat router (more routers added later)
+    app.include_router(chat_router)
+    return app
 
 
-if __name__ == "__main__":
-    main()
+# launch
+app = create_app()
