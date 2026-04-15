@@ -3,15 +3,19 @@ Add request and response handling here
 """
 
 from fastapi import APIRouter
-
-from app.models.chat import ChatMessage
-from app.services.llm import generate_reply
+from app.models.chat import ChatRequest
+from app.services.llm import handle_conversation
 
 router = APIRouter()
 
 
 @router.post("/chat")
-async def chat(request: ChatMessage):
-    generated_reply = generate_reply(request.content)
+async def chat(request: ChatRequest):
+    messages = handle_conversation(
+        message=request.message,
+        session_id=request.session_id,
+    )
 
-    return ChatMessage(content=generated_reply, role="assistant")
+    return {
+        "messages": [m.model_dump() for m in messages]
+    }
