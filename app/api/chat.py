@@ -12,6 +12,6 @@ router = APIRouter()
 
 @router.post("/chat")
 async def chat(request: ChatMessage):
-    generated_reply = generate_reply(request.message)
+    generated_reply = generate_reply(request.content)
 
-    return ChatMessage(message=generated_reply, role="assistant")
+    return ChatMessage(content=generated_reply, role="assistant")
