@@ -8,12 +8,12 @@ from app.services.llm import handle_conversation
 
 router = APIRouter()
 
-
 @router.post("/chat")
 async def chat(request: ChatRequest):
     messages = handle_conversation(
         message=request.message,
         session_id=request.session_id,
+        lesson_id=request.lesson_id
     )
 
     return {
