@@ -6,17 +6,21 @@ from app.models.lesson import Lesson
 
 router = APIRouter()
 
+
+initial_system_prompt = "You are a language tutor, speaking only Spanish!"
 LESSONS = [
     Lesson(
-        id="general",
-        name="💬 General Chat",
-        initial_system_prompt="You are a helpful assistant.",
+        id="game",
+        ui_title="💬 20 Questions Game",
+        ui_lesson_description="A fun guessing game to practice conversation skills.",
+        initial_system_prompt=initial_system_prompt,
         scenario="Open conversation",
     ),
     Lesson(
-        id="code",
-        name="💻 Code Chat",
-        initial_system_prompt="You are a programming tutor.",
+        id="roleplay",
+        ui_title="🧑‍🍳 Roleplay. Ordering at a Restaurant",
+        ui_lesson_description="Practice a common real-world scenario.",
+        initial_system_prompt=initial_system_prompt,
         scenario="Help with coding problems",
         feedback_focus="communication",
     ),

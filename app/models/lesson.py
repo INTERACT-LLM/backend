@@ -6,7 +6,8 @@ class Lesson(BaseModel):
     Defines a structured lesson that can be compiled into a system prompt.
     """
     id: str | None = None
-    name: str
+    ui_title: str | None = None
+    ui_lesson_description: str | None = None
 
     initial_system_prompt: str
     scenario: str
