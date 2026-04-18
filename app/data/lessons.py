@@ -1,4 +1,4 @@
-from app.models.lesson import Lesson
+from app.models.instructions.lesson import Lesson
 from app.data.default_system_prompt import DEFAULT_SYSTEM_PROMPT
 
 LESSONS = {

@@ -6,9 +6,9 @@ import ollama
 from app.data.lessons import LESSONS
 from app.models.chat import ChatMessage
 from app.data.default_system_prompt import DEFAULT_SYSTEM_PROMPT
-from app.models.lesson import build_system_prompt
+from app.models.instructions.lesson import build_system_prompt
 
-MODEL = "smollm:1.7b"
+MODEL = "llama3.2:3b"
 
 sessions = {}
 
