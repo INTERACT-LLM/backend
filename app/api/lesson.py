@@ -18,6 +18,7 @@ async def get_lessons():
             {
                 "id": l.id,
                 "lesson_type": l.lesson_type,
+                "min_turns": l.min_turns,
                 **l.user_instructions.model_dump(),
             }
             for l in lessons.values()
@@ -30,7 +31,7 @@ async def get_lesson(lesson_id: str):
     lesson = load_lesson(lesson_path=Path(__file__).parents[2] / "app" / "data" / "lessons" / f"{lesson_id}.toml")
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    return {"id": lesson.id, "lesson_type": lesson.lesson_type, **lesson.user_instructions.model_dump()}
+    return {"id": lesson.id, "lesson_type": lesson.lesson_type, "min_turns": lesson.min_turns, **lesson.user_instructions.model_dump()}
 
 @router.get("/lessons/{lesson_id}/details")
 async def get_lesson_details(lesson_id: str, lesson_type: str):
@@ -41,9 +42,9 @@ async def get_lesson_details(lesson_id: str, lesson_type: str):
     mi = lesson.model_instructions
     return {
         "id": lesson.id,
+        "min_turns": lesson.min_turns,
         **lesson.user_instructions.model_dump(),
         "feedback_focus": mi.feedback_focus,
         "cultural_contexts": mi.cultural_contexts,
-        "min_turns": mi.min_turns,
         "lesson_type": lesson.lesson_type,
     }
