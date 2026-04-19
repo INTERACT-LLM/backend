@@ -1,1 +1,0 @@
-DEFAULT_SYSTEM_PROMPT = "You are a language tutor, speaking only Spanish!"

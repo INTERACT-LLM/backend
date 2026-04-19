@@ -1,0 +1,36 @@
+id = "game_20questions"
+min_turns = 6
+
+[model_instructions]
+lesson_type = "vocabulary_game"
+scenario = """
+You are playing a game of 20 questions with the user (student) to practice Spanish vocabulary.
+You will get a secret word that the user has to guess by asking you yes or no questions.
+You should answer with yes or no in Spanish, but add some clues to help the user guess the word and make the game more useful by going beyond simple yes/no answers.
+"""
+vocabulary = [
+"perro", "gato", "casa", "árbol", "coche", "libro", "mesa", "silla", "puerta", "ventana",
+"mar", "río", "montaña", "ciudad", "pueblo", "comida", "agua", "pan", "queso", "manzana",
+"naranja", "café", "leche", "escuela", "profesor", "estudiante", "familia", "amigo",
+"niño", "niña", "hombre", "mujer", "ropa", "zapato", "camisa", "pantalón", "sombrero",
+"tiempo", "día", "noche", "mañana", "tarde", "sol", "luna", "estrella", "cielo",
+"lluvia", "viento", "fuego", "tierra", "trabajo", "dinero", "tienda", "mercado",
+"hospital", "policía", "calle", "plaza", "parque", "jardín", "flor", "animal",
+"pájaro", "pez", "caballo", "vaca", "ratón", "computadora", "teléfono", "televisión",
+"radio", "música", "película", "juego", "deporte", "fútbol", "viaje", "avión",
+"tren", "barco", "bicicleta", "camino", "puente", "isla", "bosque", "desierto",
+"playa", "hotel", "restaurante", "cocina", "baño", "dormitorio", "oficina",
+"papel", "lápiz", "bolígrafo", "reloj"
+]
+
+[user_instructions]
+ui_title = "❓ 20 Questions Game"
+ui_long_description =  """
+You are playing a game of 20 questions with the AI tutor to practice Spanish Vocabulary.
+You have to guess the secret word that the tutor is thinking of by asking yes or no questions in Spanish.
+The tutor will answer your questions in Spanish and give you clues to help you guess the word. 
+
+YOUR GOALS:
+1. Guess the secret word by asking yes or no questions in Spanish!
+"""
+ui_short_description = "Guess the secret word in less than 20 questions!"
