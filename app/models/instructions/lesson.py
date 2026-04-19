@@ -11,7 +11,6 @@ class ModelInstructionsLesson(BaseModel):
     """
     lesson_type: LESSON_TYPES
     scenario: str
-    min_turns: int = 6
     vocabulary: list[str] = Field(default_factory=list)
     cultural_contexts: list[str] = Field(default_factory=list)
     feedback_focus: Literal["grammar", "fluency", "communication"] | None = None
@@ -23,8 +22,7 @@ class RoleplayInstructions(ModelInstructionsLesson):
 class TwentyQuestionsInstructions(ModelInstructionsLesson):
     lesson_type: Literal["vocabulary_game"] = "vocabulary_game"
     game_name: Literal["20_questions"] = "20_questions"
-    max_questions: int = 20
-    allow_hints: bool = True
+    max_questions: int = 20 
 
 # if I add more game types I could give Lesson a union like this 
 # VocabularyGameInstructions = TwentyQuestionsInstructions | SomeOtherGameInstructions
@@ -43,6 +41,7 @@ class Lesson(BaseModel):
     Defines a structured lesson that can be compiled into a system prompt.
     """
     id: str 
+    min_turns: int
     user_instructions: UserInstructionsLesson
     model_instructions: ModelInstructionsLesson
 

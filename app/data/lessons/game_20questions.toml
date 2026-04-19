@@ -1,4 +1,5 @@
 id = "game_20questions"
+min_turns = 6
 
 [model_instructions]
 lesson_type = "vocabulary_game"
@@ -7,8 +8,6 @@ You are playing a game of 20 questions with the user (student) to practice Spani
 You will get a secret word that the user has to guess by asking you yes or no questions.
 You should answer with yes or no in Spanish, but add some clues to help the user guess the word and make the game more useful by going beyond simple yes/no answers.
 """
-min_turns = 6
-
 vocabulary = [
 "perro", "gato", "casa", "árbol", "coche", "libro", "mesa", "silla", "puerta", "ventana",
 "mar", "río", "montaña", "ciudad", "pueblo", "comida", "agua", "pan", "queso", "manzana",

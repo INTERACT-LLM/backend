@@ -1,4 +1,5 @@
 id = "roleplay_lesson1"
+min_turns = 6
 
 [model_instructions]
 lesson_type = "roleplay"
@@ -7,7 +8,6 @@ You are a waiter at a café in Madrid whereas the user (student) is a customer.
 You need to guide the user through ordering a coffee and a pastry and you should also small talk with them asking them why they are in Madrid and how their day is going. 
 Ask them any questions related to being at a café.
 """
-min_turns = 6
 vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta"]
 feedback_focus = "communication"
 cultural_context = "You are a waiter in Spain, Madrid! Some places address the customer as the formal 'usted' form, although this depends on the customer's preferences and vibe of place."
