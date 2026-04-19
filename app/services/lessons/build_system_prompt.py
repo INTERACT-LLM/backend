@@ -13,7 +13,7 @@ def build_general_instructions(general_instructions: ModelInstructionsGeneral) -
         parts.append(f"Student level is: {general_instructions.user_level}")
 
     if general_instructions.user_preferences:
-        parts.append(f"Here is some information about the student's preferences: {general_instructions.user_preferences}")
+        parts.append(f"Here is some information about the student's preferences:\n{general_instructions.user_preferences}")
 
     return parts
 
@@ -38,7 +38,7 @@ def build_system_prompt(lesson: Lesson, general_instructions: ModelInstructionsG
     mi = lesson.model_instructions
 
     parts.append(f"The lesson type is: {lesson.lesson_type}")
-    parts.append(f"This is the task scenario that you need to facilitate: {mi.scenario}")
+    parts.append(f"This is the task scenario that you need to facilitate:\n{mi.scenario}")
 
     if mi.feedback_focus:
         parts.append(f"Focus: {mi.feedback_focus}")

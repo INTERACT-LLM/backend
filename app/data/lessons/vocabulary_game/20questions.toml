@@ -27,11 +27,11 @@ vocabulary = [
 [user_instructions]
 ui_title = "❓ 20 Questions Game"
 ui_long_description =  """
-                       You are playing a game of 20 questions with the AI tutor to practice Spanish Vocabulary.
-                       You have to guess the secret word that the tutor is thinking of by asking yes or no questions in Spanish.
-                       The tutor will answer your questions in Spanish and give you clues to help you guess the word. 
+You are playing a game of 20 questions with the AI tutor to practice Spanish Vocabulary.
+You have to guess the secret word that the tutor is thinking of by asking yes or no questions in Spanish.
+The tutor will answer your questions in Spanish and give you clues to help you guess the word. 
 
-                       YOUR GOALS:
-                       1. Guess the secret word by asking yes or no questions in Spanish!
-                       """
+YOUR GOALS:
+1. Guess the secret word by asking yes or no questions in Spanish!
+"""
 ui_short_description = "Guess the secret word in less than 20 questions!"

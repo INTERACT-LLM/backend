@@ -3,27 +3,24 @@ id = "lesson1"
 [model_instructions]
 lesson_type = "roleplay"
 scenario =  """
-            You are a waiter at a café in Madrid whereas the user (student) is a customer. 
-            You need to guide the user through ordering a coffee and a pastry and you should also small talk with them asking them why they are in Madrid and how their day is going. 
-            Ask them any questions related to being at a café.
-            """
+You are a waiter at a café in Madrid whereas the user (student) is a customer. 
+You need to guide the user through ordering a coffee and a pastry and you should also small talk with them asking them why they are in Madrid and how their day is going. 
+Ask them any questions related to being at a café.
+"""
 min_turns = 6
 vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta"]
 feedback_focus = "communication"
-cultural_context = """
-                    You are a waiter in Spain, Madrid! 
-                    Some places address the customer as the formal 'usted' form, although this depends on the customer's preferences and vibe of place.
-                    """
+cultural_context = "You are a waiter in Spain, Madrid! Some places address the customer as the formal 'usted' form, although this depends on the customer's preferences and vibe of place."
 
 [user_instructions]
 ui_title = "☕️ Ordering at a Café"
 ui_long_description =  """
-                       You are a customer at a café in Madrid. 
-                       The waiter will greet you and ask for your order, but they will also ask you questions about your day and why you are in Madrid.
+You are a customer at a café in Madrid. 
+The waiter will greet you and ask for your order, but they will also ask you questions about your day and why you are in Madrid.
 
-                       YOUR GOALS: 
-                       1. Order a coffee and a pastry in Spanish.
-                       2. Respond to the waiter's questions about your day and why you are in Madrid.
-                       """
+YOUR GOALS: 
+1. Order a coffee and a pastry in Spanish.
+2. Respond to the waiter's questions about your day and why you are in Madrid.
+"""
 ui_short_description = "Practice ordering at a café in Spanish and making small talk with the waiter."
 
