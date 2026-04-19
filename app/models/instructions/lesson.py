@@ -34,15 +34,15 @@ class UserInstructionsLesson(BaseModel):
     """
     User / Student facing instructions
     """
-    ui_title: str | None = None
-    ui_short_description: str | None = None
-    ui_long_description: str | None = None
+    ui_title: str 
+    ui_short_description: str 
+    ui_long_description: str
 
 class Lesson(BaseModel):
     """
     Defines a structured lesson that can be compiled into a system prompt.
     """
-    id: str | None = None
+    id: str 
     user_instructions: UserInstructionsLesson
     model_instructions: ModelInstructionsLesson
 
