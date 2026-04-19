@@ -5,6 +5,7 @@ from app.models.instructions.general import ModelInstructionsGeneral
 
 def build_general_instructions(general_instructions: ModelInstructionsGeneral) -> list[str]:
     parts = [
+        "GENERAL INSTRUCTIONS:",
         general_instructions.system_prompt,
         f"You are teaching the language: {general_instructions.language_to_teach}",
     ]
@@ -13,7 +14,7 @@ def build_general_instructions(general_instructions: ModelInstructionsGeneral) -
         parts.append(f"Student level is: {general_instructions.user_level}")
 
     if general_instructions.user_preferences:
-        parts.append(f"Here is some information about the student's preferences:\n{general_instructions.user_preferences}")
+        parts.append(f"Here is some information about the student's preferences: {general_instructions.user_preferences}")
 
     return parts
 
@@ -29,12 +30,13 @@ def add_vocabulary_to_prompt(parts: list[str], instructions: ModelInstructionsLe
             parts.append(f"Incorporate these words naturally: {', '.join(instructions.vocabulary)}")
 
 def build_system_prompt(lesson: Lesson, general_instructions: ModelInstructionsGeneral) -> str:
-    parts: list[str] = []
-
     ## GENERAL INSTRUCTIONS ##
     parts = build_general_instructions(general_instructions)
     
     ## LESSON-SPECIFIC INSTRUCTIONS ##
+    parts.append("\nLESSON-SPECIFIC INSTRUCTIONS:")
+
+    # get model instructions for the lesson
     mi = lesson.model_instructions
 
     parts.append(f"The lesson type is: {lesson.lesson_type}")
