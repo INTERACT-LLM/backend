@@ -8,13 +8,11 @@ from app.services.lessons.load_general import load_general_instructions
 from app.services.lessons.build_system_prompt import build_system_prompt
 
 if __name__ == "__main__":
-    path = Path(__file__).resolve()
-    roleplay_dir = path.parents[1] / "app" / "data" / "lessons" / "roleplay"
-    vocabulary_game_dir = (
-        path.parents[1] / "app" / "data" / "lessons" / "vocabulary_game"
-    )
+    path = Path(__file__)
+    lessons_dir = path.parents[1] / "app" / "data" / "lessons"
 
-    lessons = load_all_lessons(roleplay_dir, vocabulary_game_dir)
+    lessons = load_all_lessons(lessons_dir)
+    
     general_instructions_path = path.parents[1] / "app" / "data" / "general_instructions_placeholder.toml"
     load_general_instructions(general_instructions_path)
 

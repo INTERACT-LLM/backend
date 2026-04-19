@@ -2,11 +2,14 @@
 Add minimal LLM logic here
 """
 
+from pathlib import Path
 import ollama
-from app.data.lessons import LESSONS
 from app.models.chat import ChatMessage
-from app.data.default_system_prompt import DEFAULT_SYSTEM_PROMPT
-from app.models.instructions.lesson import build_system_prompt
+
+from app.services.lessons.build_system_prompt import build_system_prompt
+from app.services.lessons.load_general import load_general_instructions
+from app.services.lessons.load_lessons import load_lesson
+
 
 MODEL = "llama3.2:3b"
 
@@ -14,17 +17,14 @@ sessions = {}
 
 def handle_conversation(
     message: ChatMessage,
+    lesson_id: str,
     session_id: str = "default",
-    lesson_id: str | None = None,
 ) -> list[ChatMessage]:
 
     if session_id not in sessions: # new session, initialize with system prompt (with/without lesson-specific prompt)
-        lesson = LESSONS.get(lesson_id)
-
-        if lesson:
-            system_prompt = build_system_prompt(lesson)
-        else: 
-            system_prompt = DEFAULT_SYSTEM_PROMPT
+        lesson = load_lesson(lesson_path=Path(__file__).parents[2] / "app" / "data" / "lessons" / f"{lesson_id}.toml")
+        general_instructions = load_general_instructions()
+        system_prompt = build_system_prompt(lesson, general_instructions)
 
         sessions[session_id] = [
             ChatMessage(role="system", content=system_prompt)

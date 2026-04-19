@@ -1,4 +1,4 @@
-id = "20questions"
+id = "game_20questions"
 
 [model_instructions]
 lesson_type = "vocabulary_game"
