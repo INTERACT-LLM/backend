@@ -15,13 +15,10 @@ def generate_immediate_feedback(
     schema = FeedbackResponse.model_json_schema()
     
     prompt = (
-        "You are a Spanish language tutor who provides feedback on a student's messages. Analyse the student's message for errors in grammar, vocabulary, usage, spelling, punctuation, or any other language mistakes."
-        "If there are errors, you MUST set has_error to true AND provide corrected_text AND english_error_explanation. Please note that the english_error_explanation should be in English although citing the Spanish errors directly."
-        "corrected_text and english_error_explanation must never be null when has_error is true. "
+        "You are a Spanish language tutor who provides feedback on a student's messages, focusing on any language errors."
+        "If there are any lanugage errors, you MUST set has_language_error to true AND provide corrected_text AND english_error_explanation. Please note that the english_error_explanation should be in English although citing the Spanish errors directly."
+        "corrected_text and english_error_explanation must never be null when has_language_error is true. "
         "\n\nIMPORTANT: You must respond with valid JSON only, no additional text or explanations. "
-        "The JSON response must follow this exact format:\n"
-        f"{schema}"
-        "\n\nRespond with JSON only:"
     )
 
     response = ollama.chat(
@@ -37,3 +34,30 @@ def generate_immediate_feedback(
         return {"FeedbackResponse": None, "feedback_status": "error", "detail": str(e)}
 
     return {"FeedbackResponse": feedback, "feedback_status": feedback_status}
+
+def generate_general_feedback(messages: list[dict]):
+    """
+    From conversation history, generate structured feedback with positives and improvements.
+    """
+    formatted_conversation = "\n".join(
+        f"{msg['role']}: {msg['content']}" for msg in messages
+    )
+
+    prompt = (
+        "You are a helpful and encouraging Spanish language learning coach. "
+        "The student has just finished a practice conversation. "
+        "Review the conversation and provide feedback with:\n"
+        "1. 'positive': A list of 2-3 specific things the student did well\n"
+        "2. 'improvements': A list of 2-3 specific, actionable suggestions for improvement\n"
+        "Keep the feedback concise and motivating.\n\n"
+        f"Conversation Log:\n{formatted_conversation}\n\n"
+        "IMPORTANT: Respond with valid JSON only, no additional text."
+    )
+
+    response = ollama.chat(
+        model=FEEDBACK_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+
+    return {"summary": response.message.content}
