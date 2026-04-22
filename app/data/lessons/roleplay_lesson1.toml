@@ -16,11 +16,13 @@ ui_title = "☕️ Ordering at a Café"
 ui_long_description =  """
 You are a customer at a café in Madrid. 
 The waiter will greet you and ask for your order, but they will also ask you questions about your day and why you are in Madrid.
-
-YOUR GOALS: 
-1. Order a coffee and a pastry in Spanish.
-2. Respond to the waiter's questions about your day and why you are in Madrid.
 """
+
+ui_goals = [ 
+    "Order a coffee and a pastry in Spanish.",
+    "Respond to the waiter's questions about your day and why you are in Madrid."
+]
+
 ui_short_description = "Practice ordering at a café in Spanish and making small talk with the waiter."
 
 [lesson_feedback]

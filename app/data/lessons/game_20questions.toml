@@ -29,11 +29,14 @@ feedback_focus = "grammar"
 [lesson_presentation]
 ui_title = "❓ 20 Questions Game"
 ui_long_description =  """
-You are playing a game of 20 questions with the AI tutor to practice Spanish Vocabulary.
-You have to guess the secret word that the tutor is thinking of by asking yes or no questions in Spanish.
+You are playing a game of 20 questions with the AI tutor to practice your vocabulary in an interactive setting!
+The tutor will think of a secret word and you have to guess it by asking yes or no questions in Spanish.
 The tutor will answer your questions in Spanish and give you clues to help you guess the word. 
-
-YOUR GOALS:
-1. Guess the secret word by asking yes or no questions in Spanish!
 """
+
+ui_goals = [ 
+    "Practice asking yes or no questions in Spanish.",
+    "Use clues from the tutor to guess the secret word."
+]
+
 ui_short_description = "Guess the secret word in less than 20 questions!"

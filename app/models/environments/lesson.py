@@ -36,6 +36,7 @@ class LessonPresentation(BaseModel):
     ui_title: str 
     ui_short_description: str 
     ui_long_description: str
+    ui_goals: list[str]
 
 class Lesson(BaseModel):
     """
