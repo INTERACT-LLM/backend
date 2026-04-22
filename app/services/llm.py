@@ -11,7 +11,7 @@ from app.services.lessons.load_general import load_general_instructions
 from app.services.lessons.load_lessons import load_lesson
 
 
-MODEL = "llama3.2:3b"
+from app.services.model_config import MODEL
 
 sessions = {}
 

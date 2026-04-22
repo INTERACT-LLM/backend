@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.chat import router as chat_router
 from app.api.lesson import router as lesson_router
+from app.api.feedback import router as feedback_router
 
 
 def create_app() -> FastAPI:
@@ -26,6 +27,8 @@ def create_app() -> FastAPI:
     prefix = "/api"
     app.include_router(chat_router, prefix=prefix)
     app.include_router(lesson_router, prefix=prefix)
+    app.include_router(feedback_router, prefix=prefix)
+
     return app
 
 
