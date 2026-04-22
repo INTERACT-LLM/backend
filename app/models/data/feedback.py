@@ -1,10 +1,5 @@
-"""
-Define structure of feedback to generate structured JSON feedback from feedback model 
-(see also app/services/feedback.py for feedback generation logic)
-"""
 from pydantic import BaseModel
 
-# structured feedback response model (for ollama structured output)
 class FeedbackResponse(BaseModel):
     has_language_error: bool
     corrected_text: str | None
