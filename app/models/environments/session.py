@@ -7,9 +7,9 @@ from typing import Literal
 
 
 class UserData(BaseModel):  
-    user_name: str = "Mina"
-    user_level: Literal["beginner", "intermediate", "advanced"]
-    user_preferences: str | None = None
+    name: str = "Mina"
+    proficiency_level: Literal["beginner", "intermediate", "advanced"]
+    preferences: str | None = None
 
 class SessionConfig(BaseModel):
     """
