@@ -1,7 +1,7 @@
 id = "game_20questions"
 min_turns = 6
 
-[model_instructions]
+[lesson_instructions]
 lesson_type = "vocabulary_game"
 scenario = """
 You are playing a game of 20 questions with the user (student) to practice Spanish vocabulary.
@@ -23,7 +23,10 @@ vocabulary = [
 "papel", "lápiz", "bolígrafo", "reloj"
 ]
 
-[user_instructions]
+[lesson_feedback]
+feedback_focus = "grammar"
+
+[lesson_presentation]
 ui_title = "❓ 20 Questions Game"
 ui_long_description =  """
 You are playing a game of 20 questions with the AI tutor to practice Spanish Vocabulary.

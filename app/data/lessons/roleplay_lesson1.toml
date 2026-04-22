@@ -1,7 +1,7 @@
 id = "roleplay_lesson1"
 min_turns = 6
 
-[model_instructions]
+[lesson_instructions]
 lesson_type = "roleplay"
 scenario =  """
 You are a waiter at a café in Madrid whereas the user (student) is a customer. 
@@ -9,10 +9,9 @@ You need to guide the user through ordering a coffee and a pastry and you should
 Ask them any questions related to being at a café.
 """
 vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta"]
-feedback_focus = "communication"
 cultural_context = "You are a waiter in Spain, Madrid! Some places address the customer as the formal 'usted' form, although this depends on the customer's preferences and vibe of place."
 
-[user_instructions]
+[lesson_presentation]
 ui_title = "☕️ Ordering at a Café"
 ui_long_description =  """
 You are a customer at a café in Madrid. 
@@ -24,3 +23,5 @@ YOUR GOALS:
 """
 ui_short_description = "Practice ordering at a café in Spanish and making small talk with the waiter."
 
+[lesson_feedback]
+feedback_focus = "communication"

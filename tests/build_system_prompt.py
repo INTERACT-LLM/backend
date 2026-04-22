@@ -1,24 +1,23 @@
-"""
-Run with python -m tests.build_system_prompt (from root) to see the output for first lesson to check formatting and length 
-"""
-
 from pathlib import Path
-from app.services.lessons.load_lessons import load_all_lessons
-from app.services.lessons.load_general import load_general_instructions
-from app.services.lessons.build_system_prompt import build_system_prompt
+
+from app.services.load_environments import load_lesson, load_session
+
+from app.models.llms.chat_model import ChatModel
+from app.models.llms.feedback_model import FeedbackModel
 
 if __name__ == "__main__":
-    path = Path(__file__)
-    lessons_dir = path.parents[1] / "app" / "data" / "lessons"
+    # quick test to print out the generated prompts
+    session_config = load_session(session_path=Path(__file__).parents[1] / "app" / "data" / "session.toml")
+    lesson = load_lesson(lesson_path=Path(__file__).parents[1] / "app" / "data" / "lessons" / f"game_20questions.toml")
 
-    lessons = load_all_lessons(lessons_dir)
+    chat_model = ChatModel(session_config=session_config, lesson_config=lesson, model_id="llama-3.2")
+    immediate_feedback_model = FeedbackModel(model_id="llama-3.2", session_config=session_config, lesson_config=lesson)
     
-    general_instructions_path = path.parents[1] / "app" / "data" / "general_instructions_placeholder.toml"
-    load_general_instructions(general_instructions_path)
+    general_feedback_model = FeedbackModel(model_id="llama-3.2", session_config=session_config, lesson_config=lesson, conversation=[{"role": "user", "content": "Hola, ¿cómo estás?"}, {"role": "assistant", "content": "Estoy bien, gracias. ¿Y tú?"}, {"role": "user", "content": "Muy bien también. ¿Qué hiciste hoy?"}])
 
-    # take first lesson
-    first_lesson = next(iter(lessons.values()))
-    system_prompt = build_system_prompt(first_lesson, general_instructions=load_general_instructions(general_instructions_path))
-    
-    print(system_prompt)
-    print(f"Length of system prompt: {len(system_prompt)}")
+    print("=== CHAT MODEL SYSTEM PROMPT ===")
+    print(chat_model.system_prompt)
+    print("\n\n=== IMMEDIATE FEEDBACK PROMPT ===")
+    print(immediate_feedback_model.immediate_feedback_prompt)
+    print("\n\n=== GENERAL FEEDBACK PROMPT ===")
+    print(general_feedback_model.general_feedback_prompt)
