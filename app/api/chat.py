@@ -3,8 +3,8 @@ Add request and response handling here
 """
 
 from fastapi import APIRouter
-from app.models.chat import ChatRequest
-from app.services.llm import handle_conversation
+from app.models.data.chat import ChatRequest
+from app.services.chat import handle_conversation
 
 router = APIRouter()
 
