@@ -10,6 +10,10 @@ class FeedbackResponse(BaseModel):
     corrected_text: str | None
     english_error_explanation: str | None
 
+class GeneralFeedbackResponse(BaseModel):
+    positive: list[str]
+    improvements: list[str]
+
 # for api request bodies
 class ImmediateFeedbackRequest(BaseModel):
     last_user_message: dict
