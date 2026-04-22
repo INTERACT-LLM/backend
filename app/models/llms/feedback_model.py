@@ -14,7 +14,7 @@ class FeedbackModel:
     Holds feedback model config and builds prompts from:
       - data/feedback/{language}.toml  (feedback-specific prompt templates)
       - session_config                 (user facts)
-      - lesson_config                  (lesson-specific context)
+      - lesson_config                  (lesson-specific context -> important for immediate feedback due to feedback focus & and for general feedback due to feedback focus + scenario context)
     """
 
     def __init__(self, model_id: str, session_config: SessionConfig, lesson_config: Lesson, conversation: str | list[dict] | None = None):
