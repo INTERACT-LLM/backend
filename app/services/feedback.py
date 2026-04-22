@@ -4,6 +4,7 @@ Feedback service (seperate API call from chat endpoint)
 Structured feedback response based on https://docs.ollama.com/capabilities/structured-outputs#python-2
 -> Note: Ollama recommends passing JSON schema as prompt + in the chat call
 """
+import re
 import ollama
 from app.models.feedback import FeedbackResponse, GeneralFeedbackResponse
 
@@ -42,9 +43,6 @@ def generate_immediate_feedback(
         return {"FeedbackResponse": None, "feedback_status": "error", "detail": str(e)}
 
     return {"FeedbackResponse": feedback, "feedback_status": feedback_status}
-
-import json
-import re
 
 def generate_general_feedback(messages: list[dict], only_user_messages: bool = False):
     """
