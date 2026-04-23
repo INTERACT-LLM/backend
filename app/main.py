@@ -13,15 +13,19 @@ from app.api.feedback import router as feedback_router
 def create_app() -> FastAPI:
     app = FastAPI()
 
+    # middleware - adjust origins as needed for production
     origins = ["http://localhost:3000"]
-
-    # add CORS 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # add default root endpoint for health checks
+    @app.get("/")
+    def root():
+        return {"status": "ok"}
 
     # add chat router (more routers added later)
     prefix = "/api"
@@ -32,5 +36,5 @@ def create_app() -> FastAPI:
     return app
 
 
-# launch
+# launch api 
 app = create_app()
