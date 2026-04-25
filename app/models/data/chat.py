@@ -9,5 +9,5 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: ChatMessage
-    lesson_id: str | None = None
     session_id: str
+    lesson_id: str

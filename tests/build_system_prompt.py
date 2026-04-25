@@ -1,13 +1,14 @@
 from pathlib import Path
 
-from app.services.load_environments import load_lesson, load_session
+from app.models.environments.session import UserProfile
+from app.services.load_lessons import load_lesson
 
 from app.models.llms.chat_model import ChatModel
 from app.models.llms.feedback_model import FeedbackModel
 
 if __name__ == "__main__":
     # quick test to print out the generated prompts
-    session_config = load_session(session_path=Path(__file__).parents[1] / "app" / "data" / "session.toml")
+    session_config = SessionConfig(user=UserProfile(name="Mina", language="Spanish", proficiency_level="intermediate"))
     lesson = load_lesson(lesson_path=Path(__file__).parents[1] / "app" / "data" / "lessons" / f"game_20questions.toml")
 
     chat_model = ChatModel(session_config=session_config, lesson_config=lesson, model_id="llama-3.2")

@@ -1,5 +1,5 @@
 from pathlib import Path
-from app.services.load_environments import load_all_lessons
+from app.services.load_lessons import load_all_lessons
 
 if __name__ == "__main__":
     path = Path(__file__)
