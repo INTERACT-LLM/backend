@@ -1,15 +1,7 @@
 from pathlib import Path 
 import tomllib
 from app.models.environments.lesson import Lesson
-from app.models.environments.session import SessionConfig
 
-def load_session(session_path) -> SessionConfig:
-    with open(session_path, "rb") as f:
-        data = tomllib.load(f)
-
-    session_config = SessionConfig.model_validate(data)
-
-    return session_config
 
 def load_lesson(lesson_path: Path) -> Lesson:
     with open(lesson_path, "rb") as f:

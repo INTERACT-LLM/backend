@@ -8,15 +8,17 @@ from pathlib import Path
 import re
 import ollama
 from app.models.data.feedback import FeedbackResponse, GeneralFeedbackResponse
-from app.services.load_environments import load_lesson, load_session
+from app.services.load_lessons import load_lesson
 from app.models.llms.feedback_model import FeedbackModel
 from app.services.model_config import MODEL
+from app.services.session_store import get_session
 
 def generate_immediate_feedback(
     last_user_message: dict,
     lesson_id: str,
+    session_id: str,
 ):
-    session_config = load_session(session_path=Path(__file__).parents[2] / "app" / "data" / "session.toml")
+    session_config = get_session(session_id)
     lesson = load_lesson(lesson_path=Path(__file__).parents[2] / "app" / "data" / "lessons" / f"{lesson_id}.toml")
     feedback_model = FeedbackModel(model_id=MODEL, session_config=session_config, lesson_config=lesson)
 
@@ -39,7 +41,7 @@ def generate_immediate_feedback(
 
     return {"FeedbackResponse": feedback, "feedback_status": feedback_status}
 
-def generate_general_feedback(messages: list[dict], lesson_id: str, only_user_messages: bool = False):
+def generate_general_feedback(messages: list[dict], lesson_id: str, session_id: str, only_user_messages: bool = False):
     """
     From conversation history, generate structured feedback with positives and improvements.
     Always returns both structured output (if possible) and raw model output.
@@ -50,7 +52,7 @@ def generate_general_feedback(messages: list[dict], lesson_id: str, only_user_me
     formatted_conversation = "\n".join(
         f"{msg['role']}: {msg['content']}" for msg in messages
     )
-    session_config = load_session(session_path=Path(__file__).parents[2] / "app" / "data" / "session.toml")
+    session_config = get_session(session_id)
     lesson = load_lesson(lesson_path=Path(__file__).parents[2] / "app" / "data" / "lessons" / f"{lesson_id}.toml")
     feedback_model = FeedbackModel(
         model_id=MODEL,
