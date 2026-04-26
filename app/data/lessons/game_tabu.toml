@@ -1,0 +1,29 @@
+id = "game_tabu"
+min_turns = 2
+
+[lesson_instructions]
+lesson_type = "vocabulary_game"
+scenario =  """
+You are playing a game of Tabu with the user (student) to practice Spanish vocabulary.
+In this game, the user will try to make you guess a secret word by giving you clues in Spanish, but they cannot use the secret word or a list of related "tabu" words in their clues.
+You should try to guess the secret word based on the user's clues.
+"""
+vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta"]
+
+[lesson_presentation]
+ui_title = "🎯 Tabú Words"
+ui_long_description =  """
+You are playing a game of Tabu with the AI tutor! When you enter the lesson, you will be given a secret word that the tutor has to guess. 
+You need to give clues in Spanish to help the tutor guess the word, but you cannot use the secret word or a list of related "tabu" words in your clues. Try to be creative with your clues and form complete sentences!
+The tutor will try to guess the secret word based on your clues.
+"""
+
+ui_goals = [ 
+    "Make the tutor guess the secret word by giving clues in Spanish.",
+    "Avoid using the secret word and the related 'tabu' words in your clues."
+]
+
+ui_short_description = "Make the tutor guess the secret word without using the forbidden ones!"
+
+[lesson_feedback]
+feedback_focus = "communication"
