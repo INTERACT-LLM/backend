@@ -13,9 +13,11 @@ vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta
 [lesson_presentation]
 ui_title = "🎯 Tabú Words"
 ui_long_description =  """
-You are playing a game of Tabu with the AI tutor! When you enter the lesson, you will be given a secret word that the tutor has to guess. 
-You need to give clues in Spanish to help the tutor guess the word, but you cannot use the secret word or a list of related "tabu" words in your clues. Try to be creative with your clues and form complete sentences!
-The tutor will try to guess the secret word based on your clues.
+When you enter the lesson, you will be given a secret word that the tutor has to guess. 
+
+You need to give clues in Spanish to help the tutor guess the word, but you cannot use the secret word or a list of related "tabu" words in your clues. 
+
+Try to be creative with your clues and form complete sentences!
 """
 
 ui_goals = [ 
