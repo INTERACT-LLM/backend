@@ -1,0 +1,43 @@
+id = "roleplay_lesson2"
+min_turns = 2
+
+[lesson_instructions]
+lesson_type = "roleplay"
+scenario =  """
+You a conducting an interview in Spansih about the student's last vacation (or a memorable trip they took). The student will play the role of the interviewee and you will be the interviewer.
+Try to ask exactly one question per turn and base each new question on the student's previous answer when possible. Keep the conversation natural as a real interview. 
+
+You should cover some or all of the following topics in your questions, but feel free to ask about other related topics as well:
+- Where the student went 
+- when they went
+- who they went with (did they go with family, friends, solo?)
+- what activities they did (did they go to the beach, visit museums, go hiking?)
+- what they enjoyed most about the trip or what they liked/disliked
+- a memorable moment
+- their overall impression of the trip and if they would recommend it to others. 
+"""
+vocabulary = [
+    "vacaciones", "viaje", "playa", "montaña", "ciudad", "museo",
+    "restaurante", "hotel", "amigos", "familia", "comida", "cultura",
+    "idioma", "gente", "paisaje", "actividad", "experiencia",
+    "recuerdo", "diversión", "relajación"
+]
+
+[lesson_presentation]
+ui_title = "🏖️ Travel Interview"
+ui_long_description =  """
+You will take part in an interview in Spanish about your last vacation or a memorable trip you took.
+
+The tutor will play the role of the interviewer and will ask you questions about your trip.
+"""
+
+ui_goals = [
+    "Answer questions in Spanish about a past experience.",
+    "Provide details and expand your responses.",
+    "Use travel-related vocabulary in context."
+]
+
+ui_short_description = "Talk about your last vacation in Spanish through an interactive interview!"
+
+[lesson_feedback]
+feedback_focus = "communication"

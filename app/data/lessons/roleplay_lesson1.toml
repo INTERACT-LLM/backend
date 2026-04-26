@@ -4,26 +4,42 @@ min_turns = 6
 [lesson_instructions]
 lesson_type = "roleplay"
 scenario =  """
-You are a waiter at a café in Madrid whereas the user (student) is a customer. 
-You need to guide the user through ordering a coffee and a pastry and you should also small talk with them asking them why they are in Madrid and how their day is going. 
-Ask them any questions related to being at a café.
+You are a waiter at a café in Madrid. The student is a customer.
+
+You are interacting in Spanish in a natural café setting where the student orders food and drinks and engages in small talk.
+Try to ask exactly one question per turn and base each new question on the student's previous answer when possible. Keep the conversation natural and realistic.
+
+You should guide the interaction so that it includes:
+- greeting the customer
+- offering or referring to the menu
+- taking their order (a coffee and a pastry)
+- asking follow-up questions about preferences (e.g., for here or to go)
+- small talk about why they are in Madrid and how their day is going
+
+Feel free to ask other relevant questions that fit a café interaction.
 """
-vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta"]
-cultural_context = "You are a waiter in Spain, Madrid! Some places address the customer as the formal 'usted' form, although this depends on the customer's preferences and vibe of place."
+
+vocabulary = [
+    "café con leche", "cruasán", "para llevar", "la taza", "la carta"
+]
+
+cultural_context = "You are a waiter in a café in Madrid, Spain. Be polite and natural. Using 'usted' is common, but tone can vary depending on the interaction."
 
 [lesson_presentation]
 ui_title = "☕️ Ordering at a Café"
 ui_long_description =  """
-You are a customer at a café in Madrid. 
-The waiter will greet you and ask for your order, but they will also ask you questions about your day and why you are in Madrid.
+You are a customer at a café in Madrid.
+
+The waiter will greet you, take your order, and ask a few questions about your day and your visit to Madrid.
 """
 
-ui_goals = [ 
+ui_goals = [
     "Order a coffee and a pastry in Spanish.",
-    "Respond to the waiter's questions about your day and why you are in Madrid."
+    "Respond to questions in a café setting.",
+    "Engage in short, natural small talk."
 ]
 
-ui_short_description = "Practice ordering at a café in Spanish and making small talk with the waiter."
+ui_short_description = "Order at a café in Spanish and make small-talk with the waiter."
 
 [lesson_feedback]
 feedback_focus = "communication"
