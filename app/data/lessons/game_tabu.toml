@@ -1,31 +1,149 @@
 id = "game_tabu"
-min_turns = 2
+min_turns = 6
 
 [lesson_instructions]
 lesson_type = "vocabulary_game"
-scenario =  """
+scenario = """
 You are playing a game of Tabu with the user (student) to practice Spanish vocabulary.
 In this game, the user will try to make you guess a secret word by giving you clues in Spanish, but they cannot use the secret word or a list of related "tabu" words in their clues.
 You should try to guess the secret word based on the user's clues.
+Make guesses naturally in conversation — you might say things like "¿Es...?" or "¡Creo que es...!"
 """
-vocabulary = ["café con leche", "cruasán", "para llevar", "la taza", "la carta"]
+
+[[lesson_instructions.vocabulary]]
+word = "cabeza"
+forbidden_words = ["cuerpo", "persona", "pelo", "ojo", "dolor"]
+
+[[lesson_instructions.vocabulary]]
+word = "dedo"
+forbidden_words = ["pie", "mano", "cinco", "cuerpo", "persona"]
+
+[[lesson_instructions.vocabulary]]
+word = "internet"
+forbidden_words = ["ordenador", "teléfono", "Google", "buscar", "información"]
+
+[[lesson_instructions.vocabulary]]
+word = "Londres"
+forbidden_words = ["Inglaterra", "capital", "ciudad", "inglés", "Big Ben"]
+
+[[lesson_instructions.vocabulary]]
+word = "levantarse"
+forbidden_words = ["mañana", "cama", "arriba", "abajo", "dormir"]
+
+[[lesson_instructions.vocabulary]]
+word = "desayuno"
+forbidden_words = ["comida", "café", "leche", "cena", "comer"]
+
+[[lesson_instructions.vocabulary]]
+word = "máster"
+forbidden_words = ["estudiar", "universidad", "grado (bachelor)", "cinco", "trabajo final"]
+
+[[lesson_instructions.vocabulary]]
+word = "odio"
+forbidden_words = ["amor", "indiferente", "horrible", "asco", "interesante"]
+
+[[lesson_instructions.vocabulary]]
+word = "viajar"
+forbidden_words = ["avión", "vacaciones", "coche", "visitar", "país"]
+
+[[lesson_instructions.vocabulary]]
+word = "martes"
+forbidden_words = ["hoy", "lunes", "miércoles", "español", "día"]
+
+[[lesson_instructions.vocabulary]]
+word = "museo"
+forbidden_words = ["arte", "Aros", "visitar", "cuadro", "exhibición"]
+
+[[lesson_instructions.vocabulary]]
+word = "Copenhague"
+forbidden_words = ["Dinamarca", "Aarhus", "ciudad", "capital", "Selandia"]
+
+[[lesson_instructions.vocabulary]]
+word = "avión"
+forbidden_words = ["transporte", "viajar", "aeropuerto", "pasajero", "aire"]
+
+[[lesson_instructions.vocabulary]]
+word = "molécula"
+forbidden_words = ["átomo", "química", "biología", "pequeño", "análisis"]
+
+[[lesson_instructions.vocabulary]]
+word = "planta"
+forbidden_words = ["verde", "vegetal", "flor", "fotosíntesis", "cactus"]
+
+[[lesson_instructions.vocabulary]]
+word = "Colón"
+forbidden_words = ["América", "1492", "barco", "conquistador", "azteca"]
+
+[[lesson_instructions.vocabulary]]
+word = "diarrea"
+forbidden_words = ["barriga", "comida", "estómago", "dolor", "baño"]
+
+[[lesson_instructions.vocabulary]]
+word = "medicamento"
+forbidden_words = ["pastilla", "dolor", "farmacia", "hospital", "dosis"]
+
+[[lesson_instructions.vocabulary]]
+word = "pierna"
+forbidden_words = ["cuerpo", "pie", "caminar", "persona", "largo"]
+
+[[lesson_instructions.vocabulary]]
+word = "Shakira"
+forbidden_words = ["música", "cantante", "concierto", "español", "cantar"]
+
+[[lesson_instructions.vocabulary]]
+word = "leche"
+forbidden_words = ["vaca", "bebida", "blanco", "café", "líquido"]
+
+[[lesson_instructions.vocabulary]]
+word = "dinero"
+forbidden_words = ["comprar", "vender", "tarjeta", "euro", "corona"]
+
+[[lesson_instructions.vocabulary]]
+word = "dormir"
+forbidden_words = ["cama", "cansado", "sueño", "noche", "siesta"]
+
+[[lesson_instructions.vocabulary]]
+word = "abuelo"
+forbidden_words = ["familia", "persona", "padre", "generación", "viejo"]
+
+[[lesson_instructions.vocabulary]]
+word = "izquierda"
+forbidden_words = ["derecha", "dirección", "arriba", "oeste", "mano"]
+
+[[lesson_instructions.vocabulary]]
+word = "luna de miel"
+forbidden_words = ["boda", "viaje", "matrimonio", "pareja", "amor"]
+
+[[lesson_instructions.vocabulary]]
+word = "copa"
+forbidden_words = ["taza", "vino", "vaso", "beber", "cristal"]
+
+[[lesson_instructions.vocabulary]]
+word = "libro"
+forbidden_words = ["leer", "página", "palabra", "papel", "estudiar"]
+
+[[lesson_instructions.vocabulary]]
+word = "verde"
+forbidden_words = ["color", "planta", "vegetal", "negro", "bonito"]
+
+[[lesson_instructions.vocabulary]]
+word = "noviembre"
+forbidden_words = ["mes", "ahora", "octubre", "diciembre", "aburrido"]
 
 [lesson_presentation]
-ui_title = "🎯 Tabú Words"
-ui_long_description =  """
-When you enter the lesson, you will be given a secret word that the tutor has to guess. 
+ui_title = "🎯 Tabú"
+ui_short_description = "Make the tutor guess the secret word without using the forbidden ones!"
+ui_long_description = """
+You will be given a secret word that the tutor has to guess.
 
-You need to give clues in Spanish to help the tutor guess the word, but you cannot use the secret word or a list of related "tabu" words in your clues. 
+Give clues in Spanish to help the tutor guess the word, but you cannot use the secret word or any of the related 'tabu' words in your clues.
 
-Try to be creative with your clues and form complete sentences!
+Try to be creative and form complete sentences!
 """
-
-ui_goals = [ 
+ui_goals = [
     "Make the tutor guess the secret word by giving clues in Spanish.",
     "Avoid using the secret word and the related 'tabu' words in your clues."
 ]
-
-ui_short_description = "Make the tutor guess the secret word without using the forbidden ones!"
 
 [lesson_feedback]
 feedback_focus = "communication"
