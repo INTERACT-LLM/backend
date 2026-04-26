@@ -79,22 +79,35 @@ class ChatModel:
         return "\n\n".join(filter(None, [base, general, lesson_block, vocabulary_block])).strip()
 
     def _build_vocabulary_block(self) -> str:
+        from app.models.environments.lesson import (
+            RoleplayInstructions,
+            TwentyQuestionsInstructions,
+            TabuInstructions,
+        )
+        
         lesson_instructions = self.lesson_config.lesson_instructions
 
         if not lesson_instructions.vocabulary:
             return ""
 
-        match self.lesson_config.lesson_type:
-            case "roleplay":
+        match lesson_instructions:
+            case RoleplayInstructions():
                 return (
                     "Incorporate these words naturally: "
                     f"{', '.join(lesson_instructions.vocabulary)}"
                 )
-            case "vocabulary_game":
-                max_questions = getattr(lesson_instructions, "max_questions", 20)
+            case TwentyQuestionsInstructions():
+                secret_word = random.choice(lesson_instructions.vocabulary)
                 return (
-                    f"Secret word: {random.choice(lesson_instructions.vocabulary)}. "
-                    f"Guide the student to guess it in up to {max_questions} questions."
+                    f"Secret word: {secret_word}. "
+                    f"Guide the student to guess it in up to {lesson_instructions.max_questions} questions."
+                )
+            case TabuInstructions():
+                # Secret word is NOT injected — LLM must not know it
+                # The forbidden words are also NOT injected — LLM must not know those either
+                return (
+                    "Listen carefully to the student's clues and make guesses naturally. "
+                    "Try guessing with phrases like '¿Es...?' or '¡Creo que es...!'"
                 )
             case _:
                 return ""
