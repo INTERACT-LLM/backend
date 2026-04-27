@@ -14,8 +14,10 @@ class ImmediateFeedbackRequest(BaseModel):
     last_user_message: dict
     lesson_id: str
     session_id: str
+    model_id: str | None = None
 
 class DetailedFeedbackRequest(BaseModel):
     messages: list[dict]
     lesson_id: str
     session_id: str
+    model_id: str | None = None

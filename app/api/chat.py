@@ -13,9 +13,9 @@ async def chat(request: ChatRequest):
     messages = handle_conversation(
         message=request.message,
         session_id=request.session_id,
-        lesson_id=request.lesson_id
+        lesson_id=request.lesson_id,
+        model_id=request.model_id,
     )
-
     return {
         "messages": [m.model_dump() for m in messages]
     }
