@@ -13,7 +13,7 @@ class SessionInitRequest(BaseModel):
 async def init_session(req: SessionInitRequest):
     print(f"init_session called with session_id: {req.session_id}")
     print(f"user_profile: {req.user_profile}")
-    config = SessionConfig(user=req.user_profile)
+    config = SessionConfig(session_id=req.session_id, user=req.user_profile)
     create_session(req.session_id, config)
     print(f"store after save: {list(_store.keys())}")
     return {"ok": True}
