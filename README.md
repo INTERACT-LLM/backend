@@ -12,11 +12,21 @@ Folders:
 - Services: LLM logic (feedback and chat) + game logic for game mechanics and session logic (defining a session)
 - Data: Lesson descriptions and prompts are here !
 
-## Current Setup
+## Initial Setup
 Define two `env` files for diff. setups. Locally, I recommend `.env.local`which has
 ```
-
+LLM_PROVIDER=ollama 
 ```
+-> NB. Remember to download the particular model via ollama or vllm first
+-> Alternatively switch model by also including that in the .env fil as VLLM_MODEL = X or OLLAMA_MODEL = X 
+
+And a `.env.prod` that has vLLM 
+```
+LLM_PROVIDER=vllm 
+```
+
+## Run API
+After doing the intial setup ....
 
 With `make` to develop on the local computer, run: 
 ```
