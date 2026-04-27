@@ -13,6 +13,7 @@ class UserProfile(BaseModel):
     preferences: str | None = None
 
 class SessionConfig(BaseModel):
+    session_id: str
     user: UserProfile
 
     @property

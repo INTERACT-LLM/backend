@@ -8,6 +8,7 @@ from pathlib import Path
 
 from app.models.environments.session import SessionConfig
 from app.models.environments.lesson import Lesson
+from app.services.game_utils import pick_secret_20Q
 
 CHAT_CONFIG_PATH = Path(__file__).parents[2] / "data" / "chat.toml"
 
@@ -97,7 +98,7 @@ class ChatModel:
                     f"{', '.join(lesson_instructions.vocabulary)}"
                 )
             case TwentyQuestionsInstructions():
-                secret_word = random.choice(lesson_instructions.vocabulary)
+                secret_word = pick_secret_20Q(lesson_instructions.vocabulary, self.session_config.session_id)
                 return (
                     f"Secret word: {secret_word}. "
                     f"Guide the student to guess it in up to {lesson_instructions.max_questions} questions."

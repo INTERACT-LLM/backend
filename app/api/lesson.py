@@ -6,7 +6,8 @@ import random
 from fastapi import APIRouter, HTTPException, Query
 from app.models.llms.chat_model import ChatModel
 from app.models.llms.feedback_model import FeedbackModel
-from app.models.environments.lesson import TabuInstructions
+from app.models.environments.lesson import TabuInstructions, TwentyQuestionsInstructions
+from app.services.game_utils import pick_secret_20Q
 from app.services.load_lessons import load_all_lessons, load_lesson
 from app.services.session_store import get_session
 
@@ -39,20 +40,30 @@ async def get_lesson(lesson_id: str):
     return lesson.model_dump()
 
 @router.get("/lessons/{lesson_id}/game-state")
-async def get_game_state(lesson_id: str):
+async def get_game_state(lesson_id: str, session_id: str = Query(...)):
     lesson = load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml")
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    
+
     instructions = lesson.lesson_instructions
-    if not isinstance(instructions, TabuInstructions):
-        raise HTTPException(status_code=400, detail="Lesson is not a Tabu game")
-    
-    secret = random.choice(instructions.vocabulary)
-    return {
-        "secret_word": secret.word,
-        "forbidden_words": secret.forbidden_words
-    }
+
+    if isinstance(instructions, TabuInstructions):
+        secret = random.choice(instructions.vocabulary)
+        return {
+            "game_type": "tabu",
+            "secret_word": secret.word,
+            "forbidden_words": secret.forbidden_words,
+        }
+
+    if isinstance(instructions, TwentyQuestionsInstructions):
+        secret = pick_secret_20Q(instructions.vocabulary, session_id)
+        return {
+            "game_type": "twenty_questions",
+            "secret_word": secret,
+            "max_questions": instructions.max_questions,
+        }
+
+    raise HTTPException(status_code=400, detail="Lesson is not a vocabulary game")
 
 @router.get("/lessons/{lesson_id}/prompts")
 async def get_system_prompts(lesson_id: str, session_id: str = Query(...)):
