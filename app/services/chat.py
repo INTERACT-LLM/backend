@@ -20,6 +20,7 @@ def handle_conversation(
     message: ChatMessage,
     lesson_id: str,
     session_id: str,
+    model_id: str | None = None,
 ) -> list[ChatMessage]:
 
     session_config = get_session(session_id)
@@ -27,7 +28,7 @@ def handle_conversation(
     chat_model = ChatModel(
         session_config=session_config,
         lesson_config=lesson,
-        model_id=active_model(),
+        model_id=active_model(model_id),
     )
 
     if session_id not in sessions:
@@ -37,9 +38,9 @@ def handle_conversation(
 
     sessions[session_id].append(message)
 
-    client, model_id = get_client()
+    client, resolved_model = get_client(model_id)
     response = client.chat.completions.create(
-        model=model_id,
+        model=resolved_model,
         messages=[m.model_dump() for m in sessions[session_id]],
     )
 

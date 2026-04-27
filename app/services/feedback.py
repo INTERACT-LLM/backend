@@ -16,10 +16,15 @@ from app.services.session_store import get_session
 LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
 
 
-def _load_feedback_model(lesson_id: str, session_id: str, **kwargs) -> FeedbackModel:
+def _load_feedback_model(
+    lesson_id: str,
+    session_id: str,
+    model_id: str | None = None,
+    **kwargs,
+) -> FeedbackModel:
     """Shared setup for both feedback functions."""
     return FeedbackModel(
-        model_id=active_model(),
+        model_id=active_model(model_id),
         session_config=get_session(session_id),
         lesson_config=load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml"),
         **kwargs,
@@ -48,16 +53,17 @@ def generate_immediate_feedback(
     last_user_message: dict,
     lesson_id: str,
     session_id: str,
+    model_id: str | None = None,
 ):
-    feedback_model = _load_feedback_model(lesson_id, session_id)
+    feedback_model = _load_feedback_model(lesson_id, session_id, model_id=model_id)
 
     messages = [
         {"role": "system", "content": feedback_model.immediate_feedback_prompt},
         last_user_message,
     ]
 
-    client, model_id = get_client()
-    response = client.chat.completions.create(model=model_id, messages=messages)
+    client, resolved_model = get_client(model_id)
+    response = client.chat.completions.create(model=resolved_model, messages=messages)
     raw_output = response.choices[0].message.content
 
     feedback, error = _parse_json_response(raw_output, FeedbackResponse)
@@ -70,6 +76,7 @@ def generate_general_feedback(
     messages: list[dict],
     lesson_id: str,
     session_id: str,
+    model_id: str | None = None,
     only_user_messages: bool = False,
 ):
     """
@@ -83,11 +90,13 @@ def generate_general_feedback(
         f"{msg['role']}: {msg['content']}" for msg in messages
     )
 
-    feedback_model = _load_feedback_model(lesson_id, session_id, conversation=formatted_conversation)
+    feedback_model = _load_feedback_model(
+        lesson_id, session_id, model_id=model_id, conversation=formatted_conversation
+    )
 
-    client, model_id = get_client()
+    client, resolved_model = get_client(model_id)
     response = client.chat.completions.create(
-        model=model_id,
+        model=resolved_model,
         messages=[{"role": "user", "content": feedback_model.general_feedback_prompt}],
     )
 
