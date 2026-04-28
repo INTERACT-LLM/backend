@@ -1,6 +1,6 @@
 from openai import OpenAI
 from pydantic import model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROVIDER_MODELS: dict[str, list[str]] = {
     "ollama": [
@@ -9,18 +9,18 @@ PROVIDER_MODELS: dict[str, list[str]] = {
     ],
     "vllm": [
         "meta-llama/Llama-3.1-8B",
+        "Qwen/Qwen3-0.6B",
     ],
 }
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=None)
+
     llm_provider: str = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     vllm_base_url: str = "http://localhost:8000"
     default_model: str = "llama3.2:3b"
-
-    class Config:
-        env_file = ".env.local"
 
     @model_validator(mode='after')
     def check_default_model(self):
@@ -41,10 +41,6 @@ def available_models() -> list[str]:
 
 
 def active_model(model_id: str | None = None) -> str:
-    """
-    Resolve the model to use. Falls back to default if not provided.
-    Raises if the requested model isn't available on the active provider.
-    """
     resolved = model_id or settings.default_model
     allowed = available_models()
     if resolved not in allowed:
