@@ -28,5 +28,4 @@ prod:
 
 setup-prod-linux:
 	@echo "[INFO:] Setting up production environment on Linux ..."
-	uv sync -e prod
-	python -c "import vllm; print('ok')"
+	uv sync --extra prod
