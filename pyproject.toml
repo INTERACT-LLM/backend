@@ -18,4 +18,5 @@ dependencies = [
 [project.optional-dependencies]
 prod = [
     "vllm>=0.2.0; sys_platform == 'linux'",
+    "fastsafetensor==0.3; sys_platform == 'linux'",
 ]
