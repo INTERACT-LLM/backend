@@ -22,10 +22,10 @@ def get_models():
 async def get_status():
     if settings.llm_provider == "ollama":
         base_url = settings.ollama_base_url
-        health_url = f"{base_url.rstrip('/')}/api/version"
+        health_url = f"{base_url.removesuffix("/v1")}/api/version"
     else:
         base_url = settings.vllm_base_url
-        health_url = f"{base_url.rstrip('/')}/v1/models"
+        health_url = f"{base_url}/models"
  
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
