@@ -15,8 +15,8 @@ PROVIDER_MODELS: dict[str, list[str]] = {
 
 class Settings(BaseSettings):
     llm_provider: str = "ollama"
-    ollama_base_url: str = "http://localhost:11434/v1"
-    vllm_base_url: str = "http://localhost:8000/v1"
+    ollama_base_url: str = "http://localhost:11434"
+    vllm_base_url: str = "http://localhost:8000"
     default_model: str = "llama3.2:3b"
 
     class Config:
