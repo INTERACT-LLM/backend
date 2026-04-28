@@ -26,6 +26,6 @@ dev:
 prod:
 	sudo .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 80 --env-file .env.prod
 
-setup-prod-linux:
+setup-prod:
 	@echo "[INFO:] Setting up production environment on Linux ..."
 	uv sync --extra prod
