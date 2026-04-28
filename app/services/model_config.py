@@ -8,11 +8,10 @@ PROVIDER_MODELS: dict[str, list[str]] = {
         "smollm2:360m",
     ],
     "vllm": [
-        "meta-llama/Llama-3.1-8B",
         "Qwen/Qwen3-0.6B",
+        "nvidia/Qwen3-8B-NVFP4"
     ],
 }
-
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=None)
