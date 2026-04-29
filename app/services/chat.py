@@ -4,6 +4,7 @@ Switch providers by setting LLM_PROVIDER=ollama|vllm in your .env.local
 """
 
 from pathlib import Path
+from collections.abc import Generator
 
 from app.models.data.chat import ChatMessage
 from app.models.llms.chat_model import ChatModel
@@ -21,7 +22,7 @@ def handle_conversation(
     lesson_id: str,
     session_id: str,
     model_id: str | None = None,
-) -> list[ChatMessage]:
+) -> Generator[str, None, None]:
 
     session_config = get_session(session_id)
     lesson = load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml")
@@ -39,16 +40,20 @@ def handle_conversation(
     sessions[session_id].append(message)
 
     client, resolved_model = get_client(model_id)
-    response = client.chat.completions.create(
+    stream = client.chat.completions.create(
         model=resolved_model,
         messages=[m.model_dump() for m in sessions[session_id]],
+        stream=True,
     )
 
-    assistant = ChatMessage(
-        role="assistant",
-        content=response.choices[0].message.content,
+    collected: list[str] = []
+    for chunk in stream:
+        token = chunk.choices[0].delta.content or ""
+        if token:
+            collected.append(token)
+            yield f"data: {token}\n\n"
+
+    sessions[session_id].append(
+        ChatMessage(role="assistant", content="".join(collected))
     )
-
-    sessions[session_id].append(assistant)
-
-    return list(sessions[session_id])
+    yield "data: [DONE]\n\n"
