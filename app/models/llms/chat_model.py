@@ -17,13 +17,13 @@ class ChatModel:
     Holds chat model config and builds the system prompt from:
       - data/chat.toml               (static base system prompt)
       - session_config               (user facts)
-      - lesson_config                (lesson-specific instructions)
+      - lesson_config                (lesson-specific instructions, optional)
     """
 
     def __init__(
         self,
         session_config: SessionConfig,
-        lesson_config: Lesson,
+        lesson_config: Lesson | None = None,
         model_id: str = "llama3.2:3b",
         temperature: float = 0.7,
     ):
@@ -40,9 +40,7 @@ class ChatModel:
     ## PROMPT BUILDING ##
     def _build_system_prompt(self) -> str:
         session = self.session_config
-        lesson = self.lesson_config
 
-        # base prompt from chat.toml — language only, no lesson context
         base = self._chat_config["system_prompt"].format(
             language=session.language,
         )
@@ -58,11 +56,17 @@ class ChatModel:
                 f"Here is some information about the student's preferences: {session.user.preferences}"
             )
 
-        ## LESSON ## (note feedback focus is not added here!)
-        lesson_instructions = lesson.lesson_instructions
+        general = "\n\n".join(general_parts)
+
+        # No lesson — free conversation, stop here
+        if self.lesson_config is None:
+            return "\n\n".join(filter(None, [base, general])).strip()
+
+        # Lesson-specific sections
+        lesson_instructions = self.lesson_config.lesson_instructions
         lesson_block_parts = [
             "LESSON-SPECIFIC INSTRUCTIONS:",
-            f"The lesson type is: {lesson.lesson_type}",
+            f"The lesson type is: {self.lesson_config.lesson_type}",
             "This is the task scenario that you need to facilitate:\n"
             f"{lesson_instructions.scenario}",
         ]
@@ -73,19 +77,20 @@ class ChatModel:
             )
 
         vocabulary_block = self._build_vocabulary_block()
-
-        general = "\n\n".join(general_parts)
         lesson_block = "\n\n".join(lesson_block_parts)
-        
+
         return "\n\n".join(filter(None, [base, general, lesson_block, vocabulary_block])).strip()
 
     def _build_vocabulary_block(self) -> str:
+        if self.lesson_config is None:
+            return ""
+
         from app.models.environments.lesson import (
             RoleplayInstructions,
             TwentyQuestionsInstructions,
             TabuInstructions,
         )
-        
+
         lesson_instructions = self.lesson_config.lesson_instructions
 
         if not lesson_instructions.vocabulary:
@@ -104,8 +109,6 @@ class ChatModel:
                     f"Guide the student to guess it in up to {lesson_instructions.max_questions} questions."
                 )
             case TabuInstructions():
-                # Secret word is NOT injected — LLM must not know it
-                # The forbidden words are also NOT injected — LLM must not know those either
                 return (
                     "Listen carefully to the student's clues and make guesses naturally. "
                     "Try guessing with phrases like '¿Es...?' or '¡Creo que es...!'"
