@@ -1,39 +1,44 @@
 # Backend
-FastAPI backend using OpenAI's API but with both vLLM and Ollama providers to enable easy switching between the two.
+FastAPI backend using OpenAI's API with both vLLM and Ollama providers for easy switching between the two.
+
+Note the provider can be WHATEVER base url you decide.
 
 ## Structure
-Mina's notes: How to structure a backend API
-
-app/main.py -> where the API logic is registered.
+`app/main.py` -> where the API logic is registered.
 
 Folders:
-- API: How requests enter and leave backend
-- Models: What the data looks like (chat input and requests, lesson data, session data, prompt builders for Chat_Model vs. Feedback_Model)
-- Services: LLM logic (feedback and chat) + game logic for game mechanics and session logic (defining a session)
-- Data: Lesson descriptions and prompts are here !
+- `api`: How requests enter and leave the backend
+- `models`: What the data looks like (chat input and requests, lesson data, session data, prompt builders for Chat_Model vs. Feedback_Model)
+- `data`: Lesson descriptions and prompts
+- `services`: LLM logic (feedback and chat) + game logic for game mechanics and session logic (defining a session)
 
-## Initial Setup
-Define two `env` files for diff. setups. Locally, I recommend `.env.local`which has
-```
-LLM_PROVIDER=ollama 
-```
--> NB. Remember to download the particular model via ollama or vllm first
--> Alternatively switch model by also including that in the .env fil as VLLM_MODEL = X or OLLAMA_MODEL = X 
 
-And a `.env.prod` that has vLLM 
+## LLM Host Setup
+Configuration is done via env files. Create two files in the project root:
+
+**`.env.local`** - using a locally served Ollama instance:
+```ini
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434/v1
+AVAILABLE_MODELS=llama3.2:3b,smollm2:360m
+DEFAULT_MODEL=llama3.2:3b
 ```
-LLM_PROVIDER=vllm 
+> With Ollama you can set several and the user can choose between them. VLLM is bound to one LLM at a time. Make sure you have downloaded the models you specify with ollama pull!
+
+**`.env.prod`** — grabbing a vLLM server instance (hosted by Nvidia DGX at Aarhus University)
+```ini
+LLM_PROVIDER=vllm
+VLLM_BASE_URL=https://your-server.dk/v1
+AVAILABLE_MODELS=google/gemma-4-26B-A4B-it
 ```
 
-## Run API
-After doing the intial setup ....
+> Make sure the model you set as `DEFAULT_MODEL` is actually downloaded and running in Ollama or vLLM before starting.
 
-With `make` to develop on the local computer, run: 
-```
-make dev
+## Run
+WHen you have set up `.env.local` and `.env.prod`, you can run these two
+```bash
+make dev   # runs locally with .env.local
+make prod  # runs locally but fetches url from .env.prod
 ```
 
-With `make` to serve on server (DGX), run: 
-```
-make prod
-```
+> Both these run local APIs that aren't exposed to the internet. This is intentional since both the frontend and backend live on a server together. The only differences is whether the INFERENCE server that the FastAPI is grabbing is from an external server or locally hosted.
