@@ -208,3 +208,7 @@ __marimo__/
 
 # .vscode settings
 .vscode/
+
+# env files
+.env.local
+.env.prod

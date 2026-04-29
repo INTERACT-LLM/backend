@@ -1,47 +1,84 @@
 """
-Feedback service (seperate API call from chat endpoint)
+Feedback service (separate API call from chat endpoint)
 
-Structured feedback response based on https://docs.ollama.com/capabilities/structured-outputs#python-2
--> Note: Ollama recommends passing JSON schema as prompt + in the chat call
+Structured feedback response using OpenAI-compatible API (Ollama or vLLM).
 """
+
 from pathlib import Path
 import re
-import ollama
+
 from app.models.data.feedback import FeedbackResponse, GeneralFeedbackResponse
-from app.services.load_lessons import load_lesson
 from app.models.llms.feedback_model import FeedbackModel
-from app.services.model_config import MODEL
+from app.services.load_lessons import load_lesson
+from app.services.model_config import active_model, get_client
 from app.services.session_store import get_session
+
+LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
+
+
+def _load_feedback_model(
+    lesson_id: str,
+    session_id: str,
+    model_id: str | None = None,
+    **kwargs,
+) -> FeedbackModel:
+    """Shared setup for both feedback functions."""
+    return FeedbackModel(
+        model_id=active_model(model_id),
+        session_config=get_session(session_id),
+        lesson_config=load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml"),
+        **kwargs,
+    )
+
+
+def _parse_json_response(raw: str, model_cls):
+    """
+    Try to parse raw model output into a Pydantic model.
+    Falls back to extracting the first JSON block if direct parsing fails.
+    Returns (instance | None, error | None).
+    """
+    try:
+        return model_cls.model_validate_json(raw), None
+    except Exception:
+        try:
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
+            if match:
+                return model_cls.model_validate_json(match.group()), None
+        except Exception as e:
+            return None, str(e)
+    return None, "No valid JSON found in model output"
+
 
 def generate_immediate_feedback(
     last_user_message: dict,
     lesson_id: str,
     session_id: str,
+    model_id: str | None = None,
 ):
-    session_config = get_session(session_id)
-    lesson = load_lesson(lesson_path=Path(__file__).parents[2] / "app" / "data" / "lessons" / f"{lesson_id}.toml")
-    feedback_model = FeedbackModel(model_id=MODEL, session_config=session_config, lesson_config=lesson)
+    feedback_model = _load_feedback_model(lesson_id, session_id, model_id=model_id)
 
-    # build system prompt
-    system_prompt = feedback_model.immediate_feedback_prompt
+    messages = [
+        {"role": "system", "content": feedback_model.immediate_feedback_prompt},
+        last_user_message,
+    ]
 
-    # messages
-    messages = [{"role": "system", "content": system_prompt}] + [last_user_message]
+    client, resolved_model = get_client(model_id)
+    response = client.chat.completions.create(model=resolved_model, messages=messages)
+    raw_output = response.choices[0].message.content
 
-    response = ollama.chat(
-        model=feedback_model.model_id,
-        messages=messages,
-    )
+    feedback, error = _parse_json_response(raw_output, FeedbackResponse)
+    if error:
+        return {"FeedbackResponse": None, "feedback_status": "error", "detail": error}
+    return {"FeedbackResponse": feedback, "feedback_status": "success"}
 
-    try:
-        feedback = FeedbackResponse.model_validate_json(response.message.content)
-        feedback_status = "success"
-    except Exception as e:
-        return {"FeedbackResponse": None, "feedback_status": "error", "detail": str(e)}
 
-    return {"FeedbackResponse": feedback, "feedback_status": feedback_status}
-
-def generate_general_feedback(messages: list[dict], lesson_id: str, session_id: str, only_user_messages: bool = False):
+def generate_general_feedback(
+    messages: list[dict],
+    lesson_id: str,
+    session_id: str,
+    model_id: str | None = None,
+    only_user_messages: bool = False,
+):
     """
     From conversation history, generate structured feedback with positives and improvements.
     Always returns both structured output (if possible) and raw model output.
@@ -52,43 +89,22 @@ def generate_general_feedback(messages: list[dict], lesson_id: str, session_id: 
     formatted_conversation = "\n".join(
         f"{msg['role']}: {msg['content']}" for msg in messages
     )
-    session_config = get_session(session_id)
-    lesson = load_lesson(lesson_path=Path(__file__).parents[2] / "app" / "data" / "lessons" / f"{lesson_id}.toml")
-    feedback_model = FeedbackModel(
-        model_id=MODEL,
-        session_config=session_config,
-        lesson_config=lesson,
-        conversation=formatted_conversation,
-    )
-    prompt = feedback_model.general_feedback_prompt
 
-    response = ollama.chat(
-        model=feedback_model.model_id,
-        messages=[{"role": "user", "content": prompt}],
+    feedback_model = _load_feedback_model(
+        lesson_id, session_id, model_id=model_id, conversation=formatted_conversation
     )
 
-    raw_output = response.message.content.strip()
+    client, resolved_model = get_client(model_id)
+    response = client.chat.completions.create(
+        model=resolved_model,
+        messages=[{"role": "user", "content": feedback_model.general_feedback_prompt}],
+    )
 
-    feedback = None
-    error = None
+    raw_output = response.choices[0].message.content.strip()
+    feedback, error = _parse_json_response(raw_output, GeneralFeedbackResponse)
 
-    # direct Pydantic parse
-    try:
-        feedback = GeneralFeedbackResponse.model_validate_json(raw_output)
-
-    except Exception:
-        # extract JSON block if model adds extra text
-        try:
-            match = re.search(r"\{.*\}", raw_output, re.DOTALL)
-            if match:
-                cleaned = match.group()
-                feedback = GeneralFeedbackResponse.model_validate_json(cleaned)
-        except Exception as e:
-            error = str(e)
-
-    
     return {
         "GeneralFeedbackResponse": feedback,
         "raw_output": raw_output,
-        "error": error
+        "error": error,
     }

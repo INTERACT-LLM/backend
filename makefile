@@ -17,8 +17,15 @@ check-format: # for later automated formats where pre-commit fails if this check
 	uv run ruff format . --check						
 	uv run ruff check
 
-run-ollama:
-	OLLAMA_HOST=0.0.0.0:80 ollama serve
-
-run-api:
+run-api: # artefact from dev times -> remove later
 	source .venv/bin/activate && uvicorn app.main:app --reload
+
+dev:
+	.venv/bin/uvicorn app.main:app --reload --env-file .env.local
+
+prod:
+	sudo .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 80 --env-file .env.prod
+
+setup-prod:
+	@echo "[INFO:] Setting up production environment on Linux ..."
+	uv sync --extra prod
