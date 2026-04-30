@@ -19,13 +19,16 @@ sessions: dict[str, list[ChatMessage]] = {}
 
 def handle_conversation(
     message: ChatMessage,
-    lesson_id: str,
     session_id: str,
+    lesson_id: str | None = None,  # now optional
     model_id: str | None = None,
 ) -> Generator[str, None, None]:
 
     session_config = get_session(session_id)
-    lesson = load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml")
+
+    # Only load a lesson if we have an ID — free chat passes None
+    lesson = load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml") if lesson_id else None
+
     chat_model = ChatModel(
         session_config=session_config,
         lesson_config=lesson,
