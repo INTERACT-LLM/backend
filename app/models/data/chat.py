@@ -8,7 +8,7 @@ from app.models.environments.session import SessionConfig
 class ChatMessage(BaseModel):
     role: str
     content: str
-
+    synthetic: bool = False   # for the mixed_intiative user message that prompts the tutor to respond first
 
 class ChatState(BaseModel):
     chat_id: str

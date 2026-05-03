@@ -42,11 +42,12 @@ def _ensure_system_prompt(state: ChatState, chat_model: ChatModel) -> None:
 def _stream_response(state: ChatState, model_id: str | None) -> Generator[str, None, None]:
     """
     Stream one assistant turn, append the result to state, and persist.
+    Excludes internal fields (synthetic) before sending to the LLM.
     """
     client, resolved_model = get_client(model_id)
     stream = client.chat.completions.create(
         model=resolved_model,
-        messages=[m.model_dump() for m in state.messages],
+        messages=[m.model_dump(exclude={"synthetic"}) for m in state.messages],
         stream=True,
     )
 
@@ -60,7 +61,7 @@ def _stream_response(state: ChatState, model_id: str | None) -> Generator[str, N
     state.messages.append(
         ChatMessage(role="assistant", content="".join(collected))
     )
-    create_chat(state)  # persist updated history back to store
+    create_chat(state)
     yield "data: [DONE]\n\n"
 
 
@@ -70,14 +71,16 @@ def start_chat(
 ) -> Generator[str, None, None]:
     """
     Tutor-starts flow. Called once after chat creation when tutor_starts=True.
-    Injects the kickoff prompt and streams the tutor's opening turn.
+    Injects the synthetic kickoff prompt and streams the tutor's opening turn.
     All subsequent turns go through handle_message.
     """
     state = get_chat(chat_id)
     chat_model = _build_chat_model(state, model_id)
     _ensure_system_prompt(state, chat_model)
 
-    state.messages.append(ChatMessage(role="user", content=TUTOR_START_PROMPT))
+    state.messages.append(
+        ChatMessage(role="user", content=TUTOR_START_PROMPT, synthetic=True)
+    )
     yield from _stream_response(state, model_id)
 
 

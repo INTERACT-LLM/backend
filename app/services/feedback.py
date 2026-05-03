@@ -84,8 +84,15 @@ def generate_general_feedback(
 ):
     """
     From conversation history, generate structured feedback with positives and improvements.
-    Always returns both structured output (if possible) and raw model output.
+    Synthetic messages (e.g. tutor kickoff) are excluded from analysis.
     """
+    # strip synthetic messages — they are internal scaffolding, not real student input
+    # strip synthetic and system messages — internal scaffolding, not real student input
+    messages = [
+        m for m in messages
+        if not m.get("synthetic", False) and m.get("role") != "system"
+    ]
+
     if only_user_messages:
         messages = [m for m in messages if m["role"] == "user"]
 
@@ -96,6 +103,9 @@ def generate_general_feedback(
     feedback_model = _load_feedback_model(
         lesson_id, chat_id, model_id=model_id, conversation=formatted_conversation
     )
+
+    # print the prompt for debugging
+    print(f"general_feedback_prompt:\n{feedback_model.general_feedback_prompt}")
 
     client, resolved_model = get_client(model_id)
     response = client.chat.completions.create(
