@@ -9,15 +9,14 @@ class GeneralFeedbackResponse(BaseModel):
     positive: list[str]
     improvements: list[str]
 
-# for api request bodies
 class ImmediateFeedbackRequest(BaseModel):
     last_user_message: dict
     lesson_id: str
-    session_id: str
+    chat_id: str
     model_id: str | None = None
 
 class DetailedFeedbackRequest(BaseModel):
     messages: list[dict]
     lesson_id: str
-    session_id: str
+    chat_id: str
     model_id: str | None = None

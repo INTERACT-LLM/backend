@@ -1,8 +1,7 @@
 """
 Defines how the chat model should behave — config and prompt building only.
-No ollama calls — IO lives in services/llm.py.
+No LLM calls — IO lives in services/chat.py.
 """
-import random
 import tomllib
 from pathlib import Path
 
@@ -11,6 +10,7 @@ from app.models.environments.lesson import Lesson
 from app.services.game_utils import pick_secret_20Q
 
 CHAT_CONFIG_PATH = Path(__file__).parents[2] / "data" / "chat.toml"
+
 
 class ChatModel:
     """
@@ -37,7 +37,6 @@ class ChatModel:
 
         self.system_prompt = self._build_system_prompt()
 
-    ## PROMPT BUILDING ##
     def _build_system_prompt(self) -> str:
         session = self.session_config
 
@@ -58,11 +57,9 @@ class ChatModel:
 
         general = "\n\n".join(general_parts)
 
-        # No lesson — free conversation, stop here
         if self.lesson_config is None:
             return "\n\n".join(filter(None, [base, general])).strip()
 
-        # Lesson-specific sections
         lesson_instructions = self.lesson_config.lesson_instructions
         lesson_block_parts = [
             "LESSON-SPECIFIC INSTRUCTIONS:",
@@ -103,7 +100,10 @@ class ChatModel:
                     f"{', '.join(lesson_instructions.vocabulary)}"
                 )
             case TwentyQuestionsInstructions():
-                secret_word = pick_secret_20Q(lesson_instructions.vocabulary, self.session_config.session_id)
+                secret_word = pick_secret_20Q(
+                    lesson_instructions.vocabulary,
+                    self.session_config.session_id
+                )
                 return (
                     f"Secret word: {secret_word}. "
                     f"Guide the student to guess it in up to {lesson_instructions.max_questions} questions."

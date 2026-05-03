@@ -1,51 +1,52 @@
 """
-Chat service — handles conversation turns.
-Switch providers by setting LLM_PROVIDER=ollama|vllm in your .env.local
+Chat service — handles message turns and streaming.
+History is stored in ChatState via store_chat.
+System prompt is built once from the snapshotted session config.
 """
-
 from pathlib import Path
 from collections.abc import Generator
 
-from app.models.data.chat import ChatMessage
+from app.models.data.chat import ChatMessage, ChatState
 from app.models.llms.chat_model import ChatModel
 from app.services.load_lessons import load_lesson
-from app.services.session_store import get_session
+from app.services.store_chat import get_chat, create_chat
 from app.services.model_config import active_model, get_client
 
 LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
 
-sessions: dict[str, list[ChatMessage]] = {}
+TUTOR_START_PROMPT = "Please begin the lesson. Start the conversation in the target language."
 
 
-def handle_conversation(
-    message: ChatMessage,
-    session_id: str,
-    lesson_id: str | None = None,  # now optional
-    model_id: str | None = None,
-) -> Generator[str, None, None]:
-
-    session_config = get_session(session_id)
-
-    # Only load a lesson if we have an ID — free chat passes None
-    lesson = load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml") if lesson_id else None
-
-    chat_model = ChatModel(
-        session_config=session_config,
+def _build_chat_model(state: ChatState, model_id: str | None) -> ChatModel:
+    """Build a ChatModel from the snapshotted config and lesson. Called once per chat."""
+    lesson = (
+        load_lesson(lesson_path=LESSONS_DIR / f"{state.lesson_id}.toml")
+        if state.lesson_id
+        else None
+    )
+    return ChatModel(
+        session_config=state.snapshotted_config,
         lesson_config=lesson,
         model_id=active_model(model_id),
     )
 
-    if session_id not in sessions:
-        sessions[session_id] = [
+
+def _ensure_system_prompt(state: ChatState, chat_model: ChatModel) -> None:
+    """Inject the system prompt if this is the first turn."""
+    if not state.messages:
+        state.messages.append(
             ChatMessage(role="system", content=chat_model.system_prompt)
-        ]
+        )
 
-    sessions[session_id].append(message)
 
+def _stream_response(state: ChatState, model_id: str | None) -> Generator[str, None, None]:
+    """
+    Stream one assistant turn, append the result to state, and persist.
+    """
     client, resolved_model = get_client(model_id)
     stream = client.chat.completions.create(
         model=resolved_model,
-        messages=[m.model_dump() for m in sessions[session_id]],
+        messages=[m.model_dump() for m in state.messages],
         stream=True,
     )
 
@@ -56,7 +57,42 @@ def handle_conversation(
             collected.append(token)
             yield f"data: {token}\n\n"
 
-    sessions[session_id].append(
+    state.messages.append(
         ChatMessage(role="assistant", content="".join(collected))
     )
+    create_chat(state)  # persist updated history back to store
     yield "data: [DONE]\n\n"
+
+
+def start_chat(
+    chat_id: str,
+    model_id: str | None = None,
+) -> Generator[str, None, None]:
+    """
+    Tutor-starts flow. Called once after chat creation when tutor_starts=True.
+    Injects the kickoff prompt and streams the tutor's opening turn.
+    All subsequent turns go through handle_message.
+    """
+    state = get_chat(chat_id)
+    chat_model = _build_chat_model(state, model_id)
+    _ensure_system_prompt(state, chat_model)
+
+    state.messages.append(ChatMessage(role="user", content=TUTOR_START_PROMPT))
+    yield from _stream_response(state, model_id)
+
+
+def handle_message(
+    chat_id: str,
+    message: ChatMessage,
+    model_id: str | None = None,
+) -> Generator[str, None, None]:
+    """
+    Normal turn. Works for both free chat and lesson chat.
+    System prompt is injected on the first call if start_chat was never called.
+    """
+    state = get_chat(chat_id)
+    chat_model = _build_chat_model(state, model_id)
+    _ensure_system_prompt(state, chat_model)
+
+    state.messages.append(message)
+    yield from _stream_response(state, model_id)
