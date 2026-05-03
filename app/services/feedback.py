@@ -11,21 +11,24 @@ from app.models.data.feedback import FeedbackResponse, GeneralFeedbackResponse
 from app.models.llms.feedback_model import FeedbackModel
 from app.services.load_lessons import load_lesson
 from app.services.model_config import active_model, get_client
-from app.services.session_store import get_session
+from app.services.store_chat import get_chat
 
 LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
 
 
 def _load_feedback_model(
     lesson_id: str,
-    session_id: str,
+    chat_id: str,
     model_id: str | None = None,
     **kwargs,
 ) -> FeedbackModel:
     """Shared setup for both feedback functions."""
+    state = get_chat(chat_id)
+    if not state:
+        raise ValueError(f"Chat not found: {chat_id}")
     return FeedbackModel(
         model_id=active_model(model_id),
-        session_config=get_session(session_id),
+        session_config=state.snapshotted_config,
         lesson_config=load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml"),
         **kwargs,
     )
@@ -52,10 +55,10 @@ def _parse_json_response(raw: str, model_cls):
 def generate_immediate_feedback(
     last_user_message: dict,
     lesson_id: str,
-    session_id: str,
+    chat_id: str,
     model_id: str | None = None,
 ):
-    feedback_model = _load_feedback_model(lesson_id, session_id, model_id=model_id)
+    feedback_model = _load_feedback_model(lesson_id, chat_id, model_id=model_id)
 
     messages = [
         {"role": "system", "content": feedback_model.immediate_feedback_prompt},
@@ -75,14 +78,21 @@ def generate_immediate_feedback(
 def generate_general_feedback(
     messages: list[dict],
     lesson_id: str,
-    session_id: str,
+    chat_id: str,
     model_id: str | None = None,
     only_user_messages: bool = False,
 ):
     """
     From conversation history, generate structured feedback with positives and improvements.
-    Always returns both structured output (if possible) and raw model output.
+    Synthetic messages (e.g. tutor kickoff) are excluded from analysis.
     """
+    # strip synthetic messages — they are internal scaffolding, not real student input
+    # strip synthetic and system messages — internal scaffolding, not real student input
+    messages = [
+        m for m in messages
+        if not m.get("synthetic", False) and m.get("role") != "system"
+    ]
+
     if only_user_messages:
         messages = [m for m in messages if m["role"] == "user"]
 
@@ -91,8 +101,11 @@ def generate_general_feedback(
     )
 
     feedback_model = _load_feedback_model(
-        lesson_id, session_id, model_id=model_id, conversation=formatted_conversation
+        lesson_id, chat_id, model_id=model_id, conversation=formatted_conversation
     )
+
+    # print the prompt for debugging
+    print(f"general_feedback_prompt:\n{feedback_model.general_feedback_prompt}")
 
     client, resolved_model = get_client(model_id)
     response = client.chat.completions.create(
