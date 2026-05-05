@@ -2,6 +2,9 @@
 Chat service — handles message turns and streaming.
 History is stored in ChatState via store_chat.
 System prompt is built once from the snapshotted session config.
+
+NB. max_tokens is set to a low value (and not user-configurable)
+-> consider if it needs to be configured somewhere else!s
 """
 from pathlib import Path
 from collections.abc import Generator
@@ -49,6 +52,7 @@ def _stream_response(state: ChatState, model_id: str | None) -> Generator[str, N
         model=resolved_model,
         messages=[m.model_dump(exclude={"synthetic"}) for m in state.messages],
         stream=True,
+        max_tokens=400,
     )
 
     collected: list[str] = []
