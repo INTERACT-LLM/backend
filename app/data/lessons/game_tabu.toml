@@ -4,10 +4,11 @@ min_turns = 6
 [lesson_instructions]
 lesson_type = "vocabulary_game"
 scenario = """
-You are playing a game of Tabu with the user (student) to practice Spanish vocabulary.
-In this game, the user will try to make you guess a secret word by giving you clues in Spanish, but they cannot use the secret word or a list of related "tabu" words in their clues.
-You should try to guess the secret word based on the user's clues.
-Make guesses naturally in conversation — you might say things like "¿Es...?" or "¡Creo que es...!"
+You are playing Tabu with the student to practice Spanish vocabulary.
+The student gives you clues in Spanish to make you guess a secret word. You don't need to track any rules or forbidden words — just listen to the clues and try to guess!
+Make guesses naturally in conversation, for example: "¿Es...?" or "¡Creo que es...!"
+
+Your role is to guess, not to give clues. The student is the one describing!
 """
 
 [[lesson_instructions.vocabulary]]
@@ -134,15 +135,14 @@ forbidden_words = ["mes", "ahora", "octubre", "diciembre", "aburrido"]
 ui_title = "🎯 Tabú"
 ui_short_description = "Make the tutor guess the secret word without using the forbidden ones!"
 ui_long_description = """
-You will be given a secret word that the tutor has to guess.
+You have a secret word and the tutor has to guess it. 
 
-Give clues in Spanish to help the tutor guess the word, but you cannot use the secret word or any of the related 'tabu' words in your clues.
-
-Try to be creative and form complete sentences!
+You have to give clues in Spanish, but you can't use the secret word or any of the forbidden ("tabú") related words.
 """
 ui_goals = [
-    "Make the tutor guess the secret word by giving clues in Spanish.",
-    "Avoid using the secret word and the related 'tabu' words in your clues."
+    "Make the tutor guess the secret word by giving clues.",
+    "Avoid using the secret word or the forbidden ones.",
+    "Be creative and try to use full sentences!"
 ]
 
 [lesson_feedback]
