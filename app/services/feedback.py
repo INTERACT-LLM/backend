@@ -17,7 +17,7 @@ LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
 
 
 def _load_feedback_model(
-    lesson_id: str,
+    lesson_id: str | None,
     chat_id: str,
     model_id: str | None = None,
     **kwargs,
@@ -26,20 +26,22 @@ def _load_feedback_model(
     state = get_chat(chat_id)
     if not state:
         raise ValueError(f"Chat not found: {chat_id}")
+
+    lesson_config = (
+        load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml")
+        if lesson_id
+        else None
+    )
+
     return FeedbackModel(
         model_id=active_model(model_id),
         session_config=state.snapshotted_config,
-        lesson_config=load_lesson(lesson_path=LESSONS_DIR / f"{lesson_id}.toml"),
+        lesson_config=lesson_config,
         **kwargs,
     )
 
 
 def _parse_json_response(raw: str, model_cls):
-    """
-    Try to parse raw model output into a Pydantic model.
-    Falls back to extracting the first JSON block if direct parsing fails.
-    Returns (instance | None, error | None).
-    """
     try:
         return model_cls.model_validate_json(raw), None
     except Exception:
@@ -54,7 +56,7 @@ def _parse_json_response(raw: str, model_cls):
 
 def generate_immediate_feedback(
     last_user_message: dict,
-    lesson_id: str,
+    lesson_id: str | None,
     chat_id: str,
     model_id: str | None = None,
 ):
@@ -77,17 +79,11 @@ def generate_immediate_feedback(
 
 def generate_general_feedback(
     messages: list[dict],
-    lesson_id: str,
+    lesson_id: str | None,
     chat_id: str,
     model_id: str | None = None,
     only_user_messages: bool = False,
 ):
-    """
-    From conversation history, generate structured feedback with positives and improvements.
-    Synthetic messages (e.g. tutor kickoff) are excluded from analysis.
-    """
-    # strip synthetic messages — they are internal scaffolding, not real student input
-    # strip synthetic and system messages — internal scaffolding, not real student input
     messages = [
         m for m in messages
         if not m.get("synthetic", False) and m.get("role") != "system"
@@ -104,7 +100,6 @@ def generate_general_feedback(
         lesson_id, chat_id, model_id=model_id, conversation=formatted_conversation
     )
 
-    # print the prompt for debugging
     print(f"general_feedback_prompt:\n{feedback_model.general_feedback_prompt}")
 
     client, resolved_model = get_client(model_id)
