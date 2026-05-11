@@ -10,14 +10,13 @@ from app.models.environments.session import SessionConfig
 FEEDBACK_CONFIG_DIR = Path(__file__).parents[2] / "data" / "feedback"
 
 class FeedbackModel:
-    """
-    Holds feedback model config and builds prompts from:
-      - data/feedback/{language}.toml  (feedback-specific prompt templates)
-      - session_config                 (user facts)
-      - lesson_config                  (lesson-specific context -> important for immediate feedback due to feedback focus & and for general feedback due to feedback focus + scenario context)
-    """
-
-    def __init__(self, model_id: str, session_config: SessionConfig, lesson_config: Lesson, conversation: str | list[dict] | None = None):
+    def __init__(
+        self,
+        model_id: str,
+        session_config: SessionConfig,
+        lesson_config: Lesson | None = None,
+        conversation: str | list[dict] | None = None,
+    ):
         self.session_config = session_config
         self.lesson_config = lesson_config
         self.model_id: str = model_id
@@ -36,6 +35,9 @@ class FeedbackModel:
         )
 
     def _get_focus_line(self) -> str:
+        # no lesson in free chat — fall back to communication focus
+        if not self.lesson_config:
+            return self._prompts["focus_lines"].get("communication", "")
         focus = self.lesson_config.lesson_feedback.feedback_focus
         if not focus:
             return ""
@@ -43,7 +45,6 @@ class FeedbackModel:
 
     def _build_immediate_prompt(self) -> str:
         tmpl = self._prompts["immediate"]
-
         return tmpl["system_prompt"].format(
             language=self.session_config.language,
             level=self.session_config.user.proficiency_level,
@@ -67,7 +68,6 @@ class FeedbackModel:
             raise ValueError("Conversation history is required to build general feedback prompt.")
 
         tmpl = self._prompts["general"]
-
         return tmpl["system_prompt"].format(
             language=self.session_config.language,
             level=self.session_config.user.proficiency_level,
