@@ -9,15 +9,17 @@ from app.models.environments.session import SessionConfig
 from app.models.environments.lesson import Lesson
 from app.services.game_utils import pick_secret_20Q
 
-CHAT_CONFIG_PATH = Path(__file__).parents[2] / "data" / "chat.toml"
+DATA_DIR = Path(__file__).parents[2] / "data"
+CHAT_CONFIG_PATH = DATA_DIR / "chat.toml"
+FREE_CHAT_CONFIG_PATH = DATA_DIR / "free_chat.toml"
 
 
 class ChatModel:
     """
     Holds chat model config and builds the system prompt from:
-      - data/chat.toml               (static base system prompt)
-      - session_config               (user facts)
-      - lesson_config                (lesson-specific instructions, optional)
+      - data/chat.toml or data/free_chat.toml  (base system prompt)
+      - session_config                          (user facts)
+      - lesson_config                           (lesson-specific instructions, optional)
     """
 
     def __init__(
@@ -32,7 +34,8 @@ class ChatModel:
         self.model_id = model_id
         self.temperature = temperature
 
-        with open(CHAT_CONFIG_PATH, "rb") as f:
+        config_path = CHAT_CONFIG_PATH if lesson_config else FREE_CHAT_CONFIG_PATH
+        with open(config_path, "rb") as f:
             self._chat_config = tomllib.load(f)
 
         self.system_prompt = self._build_system_prompt()
