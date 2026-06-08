@@ -1,10 +1,10 @@
 """
 API for LLM provider and model configuration.
 """
-
 from fastapi import APIRouter
-import httpx
+
 from app.services.model_config import settings, available_models
+from app.services.provider_state import provider_state
 
 router = APIRouter()
 
@@ -20,24 +20,15 @@ def get_models():
 
 @router.get("/llm/status")
 async def get_status():
-    if settings.llm_provider == "ollama":
-        base_url = settings.ollama_base_url
-        health_url = f"{base_url.removesuffix("/v1")}/api/version"
-    else:
-        base_url = settings.vllm_base_url
-        health_url = f"{base_url}/models"
- 
-    try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            resp = await client.get(health_url)
-        online = resp.status_code == 200
-    except Exception:
-        online = False
-
-    print(f"Checked LLM status at {health_url}: online={online}")
- 
+    """
+    Report current provider state. Reads from ProviderState (kept fresh by the
+    background health monitor) — no live HTTP probing here.
+    """
     return {
-        "provider": settings.llm_provider,
-        "base_url": base_url,
-        "online": online,
+        "configured_provider": provider_state.primary,
+        "active_provider":     provider_state.active,
+        "is_failed_over":      provider_state.is_failed_over,
+        "primary_online":      not provider_state.is_failed_over,
+        "fallback_available":  settings.claude_fallback_enabled,
+        "fallback_model":      settings.anthropic_model if settings.claude_fallback_enabled else None,
     }
