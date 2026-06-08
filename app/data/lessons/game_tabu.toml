@@ -4,7 +4,7 @@ min_turns = 6
 [lesson_instructions]
 lesson_type = "vocabulary_game"
 scenario = """
-You are playing Tabu with the student to practice Spanish vocabulary.
+You are playing Tabú with the student to practice Spanish vocabulary.
 The student gives you clues in Spanish to make you guess a secret word. You don't need to track any rules or forbidden words — just listen to the clues and try to guess!
 Make guesses naturally in conversation, for example: "¿Es...?" or "¡Creo que es...!"
 
