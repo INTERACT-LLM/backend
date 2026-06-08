@@ -11,7 +11,6 @@ async def get_immediate_feedback(req: ImmediateFeedbackRequest):
         req.last_user_message,
         req.lesson_id,
         req.chat_id,
-        model_id=req.model_id,
     )
 
 
@@ -21,5 +20,4 @@ async def get_detailed_feedback(req: DetailedFeedbackRequest):
         req.messages,
         req.lesson_id,
         req.chat_id,
-        model_id=req.model_id,
     )

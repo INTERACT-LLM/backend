@@ -11,11 +11,19 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # primary providers
     llm_provider: str
     ollama_base_url: str | None = None
     vllm_base_url: str | None = None
     available_models: str
     default_model: str | None = None
+
+    # anthropic fallback
+    anthropic_base_url: str | None = None
+    anthropic_api_key: str | None = None
+    anthropic_model: str | None = None
+    claude_fallback_enabled: bool = False
+    primary_recheck_interval_s: int = 300
 
     @model_validator(mode="after")
     def check_config(self):
@@ -36,6 +44,20 @@ class Settings(BaseSettings):
                 f"default_model {self.default_model!r} is not in "
                 f"available_models: {self.available_models}"
             )
+
+        # Fallback validation: if enabled, all Anthropic settings must be present.
+        if self.claude_fallback_enabled:
+            missing = [
+                name for name, val in [
+                    ("anthropic_base_url", self.anthropic_base_url),
+                    ("anthropic_api_key", self.anthropic_api_key),
+                    ("anthropic_model", self.anthropic_model),
+                ] if not val
+            ]
+            if missing:
+                raise ValueError(
+                    f"claude_fallback_enabled is True but missing: {', '.join(missing)}"
+                )
         return self
 
 
@@ -56,7 +78,20 @@ def active_model(model_id: str | None = None) -> str:
     return resolved
 
 
-def get_client(model_id: str | None = None) -> tuple[OpenAI, str]:
+def get_client(provider: str, model_id: str | None = None) -> tuple[OpenAI, str]:
+    """
+    Return an OpenAI-compatible client for the given provider, plus the model id to use.
+    """
+    url = getattr(settings, f"{provider}_base_url", None)
+    if not url:
+        raise ValueError(f"No base_url configured for provider {provider!r}")
+
+    if provider == "anthropic":
+        if not settings.anthropic_api_key:
+            raise RuntimeError("anthropic_api_key is not set")
+        client = OpenAI(base_url=url, api_key=settings.anthropic_api_key)
+        return client, settings.anthropic_model
+
+    # ollama or vllm
     resolved = active_model(model_id)
-    url = getattr(settings, f"{settings.llm_provider}_base_url")
     return OpenAI(base_url=url, api_key="not-used"), resolved

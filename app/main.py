@@ -1,6 +1,8 @@
 """
 Init FastAPI
 """
+import asyncio
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,9 +12,26 @@ from app.api.lesson import router as lesson_router
 from app.api.feedback import router as feedback_router
 from app.api.session import router as session_router
 from app.api.llm import router as llm_router
+from app.services.health_monitor import monitor_primary_health
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: launch the background primary-health monitor.
+    health_task = asyncio.create_task(monitor_primary_health())
+    try:
+        yield
+    finally:
+        # Shutdown: cancel and await the monitor cleanly.
+        health_task.cancel()
+        try:
+            await health_task
+        except asyncio.CancelledError:
+            pass
+
 
 def create_app() -> FastAPI:
-    app = FastAPI()
+    app = FastAPI(lifespan=lifespan)
 
     # middleware - adjust origins as needed for production
     origins = ["http://localhost:3000"]
@@ -39,5 +58,5 @@ def create_app() -> FastAPI:
     return app
 
 
-# launch api 
+# launch api
 app = create_app()
