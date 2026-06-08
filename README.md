@@ -33,7 +33,7 @@ make install
 This installs `uv` and the project files onto your computer (omit first step if you have `uv` already)
 
 ## LLM Hosting Setup
-For the LLM hosting setup, please refer to the setup -> [docs/hosting_setup.md](/docs/hosting_setup.md),.
+For the LLM hosting setup, please refer to [docs/hosting_setup.md](/docs/hosting_setup.md).
 
 
 ## 🚀 Run the Server
