@@ -8,7 +8,7 @@ from app.models.llms.feedback_model import FeedbackModel
 
 if __name__ == "__main__":
     # quick test to print out the generated prompts
-    session_config = SessionConfig(user=UserProfile(name="Mina", language="Spanish", proficiency_level="intermediate"))
+    session_config = SessionConfig(user=UserProfile(name="Mina", language="Spanish", proficiency_level="intermediate"), session_id="test-session")
     lesson = load_lesson(lesson_path=Path(__file__).parents[1] / "app" / "data" / "lessons" / f"game_tabu.toml")
 
     chat_model = ChatModel(session_config=session_config, lesson_config=lesson, model_id="llama-3.2")
