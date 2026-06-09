@@ -16,7 +16,7 @@ Talks to LLMs through the OpenAI-compatible API, with vLLM, Ollama, and Anthropi
 <div style="margin-top: 2.2em;"></div>
 
 ## 🛠️ Technical Requirements
-The code was developed and run on `Python 3.12.3` on a macOS (`15.3.1`), but is currently served on a Linux server.
+The code was developed and run on `Python 3.12.3` on a macOS (`26.5.1`), but is currently served on a Linux server.
 
 The project also requires:
 | Tool     | Installation                                                                 |
