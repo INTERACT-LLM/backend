@@ -48,7 +48,7 @@ class ChatModel:
         )
 
         general_parts = [
-            "GENERAL INSTRUCTIONS:",
+            "PERSONALIZATION INSTRUCTIONS:",
             f"You are teaching the language: {session.language}",
         ]
         if session.user.proficiency_level:
