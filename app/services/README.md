@@ -9,7 +9,7 @@ The LLM generation logic for the chat and feedback model
 | `feedback` | Generates immediate and general feedback on student messages by calling the LLM with structured JSON prompts. (feedback model) |
 
 ## Utils Files
-Load lesson, config how m odels should be loaded and a game_utiles
+Load lessons, configure how models should be loaded & a small game_utils (for drawing a random word)
 
 | Name | Purpose |
 | --- | --- |
