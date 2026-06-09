@@ -1,10 +1,10 @@
 id = "roleplay_lesson2"
-min_turns = 2
+min_turns = 5
 
 [lesson_instructions]
 lesson_type = "roleplay"
 scenario =  """
-You a conducting an interview in Spansih about the student's last vacation (or a memorable trip they took). The student will play the role of the interviewee and you will be the interviewer.
+You a conducting an interview in Spanish about the student's last vacation (or a memorable trip they took). The student will play the role of the interviewee and you will be the interviewer.
 Try to ask exactly one question per turn and base each new question on the student's previous answer when possible. Keep the conversation natural as a real interview. 
 
 You should cover some or all of the following topics in your questions, but feel free to ask about other related topics as well:

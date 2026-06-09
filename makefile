@@ -17,9 +17,6 @@ check-format: # for later automated formats where pre-commit fails if this check
 	uv run ruff format . --check						
 	uv run ruff check
 
-run-api: # artefact from dev times -> remove later
-	source .venv/bin/activate && uvicorn app.main:app --reload
-
 dev:
 	.venv/bin/uvicorn app.main:app --reload --env-file .env.local
 

@@ -111,10 +111,5 @@ class ChatModel:
                     f"Secret word: {secret_word}. "
                     f"Guide the student to guess it in up to {lesson_instructions.max_questions} questions."
                 )
-            case TabuInstructions():
-                return (
-                    "Listen carefully to the student's clues and make guesses naturally. "
-                    "Try guessing with phrases like '¿Es...?' or '¡Creo que es...!'"
-                )
             case _:
                 return ""

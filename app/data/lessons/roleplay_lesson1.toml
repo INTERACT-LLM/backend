@@ -1,5 +1,5 @@
 id = "roleplay_lesson1"
-min_turns = 6
+min_turns = 4
 
 [lesson_instructions]
 lesson_type = "roleplay"
