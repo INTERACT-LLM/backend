@@ -71,7 +71,7 @@ def generate_immediate_feedback(
         last_user_message,
     ]
 
-    client, resolved_model = get_client(state.provider, state.model)
+    client, resolved_model = get_client(state.provider)
     try:
         response = client.chat.completions.create(model=resolved_model, messages=messages)
     except Exception as e:
@@ -112,7 +112,7 @@ def generate_general_feedback(
 
     print(f"general_feedback_prompt:\n{feedback_model.general_feedback_prompt}")
 
-    client, resolved_model = get_client(state.provider, state.model)
+    client, resolved_model = get_client(state.provider)
     try:
         response = client.chat.completions.create(
             model=resolved_model,

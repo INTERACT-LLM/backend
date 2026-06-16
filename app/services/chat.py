@@ -75,7 +75,7 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
     yield an error event the frontend can act on.
     """
     try:
-        client, resolved_model = get_client(state.provider, state.model)
+        client, resolved_model = get_client(state.provider)
         stream = client.chat.completions.create(
             model=resolved_model,
             messages=[m.model_dump(exclude={"synthetic"}) for m in state.messages],

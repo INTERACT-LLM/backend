@@ -3,7 +3,7 @@ API for LLM provider and model configuration.
 """
 from fastapi import APIRouter
 
-from app.services.model_config import settings, available_models
+from app.services.model_config import settings
 from app.services.provider_state import provider_state
 
 router = APIRouter()
@@ -12,7 +12,6 @@ router = APIRouter()
 @router.get("/llm/models")
 def get_models():
     return {
-        "models": available_models(),
         "provider": settings.llm_provider,
         "default_model": settings.default_model,
     }
