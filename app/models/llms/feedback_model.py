@@ -20,7 +20,6 @@ class FeedbackModel:
         self.session_config = session_config
         self.lesson_config = lesson_config
         self.model_id: str = model_id
-        self.temperature = 0.2
         self.conversation = conversation
 
         config_path = FEEDBACK_CONFIG_DIR / f"{session_config.language.lower()}.toml"
