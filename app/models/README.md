@@ -13,8 +13,10 @@ Configuration that defines the context a chat or feedback turn runs in: who the 
 
 | Name | Purpose |
 | --- | --- |
-| `lesson` | Lesson config (presentation, instructions per lesson type, feedback focus). |
-| `session` | User session config (identity, language, proficiency level). |
+| `lesson` | Lesson config (UI presentation, instructions per lesson type, feedback focus). |
+| `session` | User session config (name, language, proficiency level). |
+
+> NB. Environments is a made up name; no idea what the convention is!
 
 ## LLMs
 Wrappers that define how a model should behave for a given task: build prompts, hold per-call parameters. They do not call the LLM. That lives in [app/services](/app/services/).
