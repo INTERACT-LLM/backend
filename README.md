@@ -2,10 +2,10 @@
 
 FastAPI backend for the [InteractLLM frontend](https://github.com/INTERACT-LLM/frontend). 
 
-Talks to LLMs through the OpenAI-compatible API, with vLLM, Ollama, and Anthropic as supported providers (see configuration below).
+LLM logic and inference for chat LLM and feedback LLMs (immediate and general feedback). Chat LLM has a bunch of lesson templates and prompt templates (see overview below). LLM inference is setup to run via OpenAI-compatiable APIs for vLLM, Ollama and Anthropic (see [LLM Hosting Setup](#llm-hosting-setup)).
 
 ## 🌟 Overview
-`app/main.py` is where the API logic is registered. The table below gives an overview of the `app` folder; deeper write-ups for individual subfolders live in their own `README.md`, linked in the "More Info" column.
+`app/main.py` is where the API logic is. The table below gives an overview of the `app` folder; deeper write-ups for individual subfolders live in their own `README.md`, linked in the "More Info" column.
 | 📁 Folder | Description | More Info |
 | --- | --- | --- |
 | `api` | Request entry and exit points for the backend. | |
@@ -44,4 +44,4 @@ make dev   # runs locally with .env.local
 make prod  # runs locally with .env.prod
 ```
 
-> Both commands run a local API that is not exposed to the internet. This is intentional: the frontend and backend share a server, and external traffic is handled at the infrastructure layer. The only difference between `dev` and `prod` is whether the inference server FastAPI talks to is local (Ollama) or remote (vLLM on DGX).
+> Both commands run a local API that is not exposed to the internet. This is intentional: the frontend and backend share a server, and external traffic is handled at the infrastructure layer. The only difference between `make dev` and `make prod` is whether you are running with .env.local or .env.prod. Local dev also has it setup so that the API updates when you make file changes (useful for testing).
