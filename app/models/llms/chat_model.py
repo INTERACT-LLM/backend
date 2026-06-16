@@ -27,12 +27,10 @@ class ChatModel:
         session_config: SessionConfig,
         lesson_config: Lesson | None = None,
         model_id: str = "llama3.2:3b",
-        temperature: float = 0.7,
     ):
         self.session_config = session_config
         self.lesson_config = lesson_config
         self.model_id = model_id
-        self.temperature = temperature
 
         config_path = CHAT_CONFIG_PATH if lesson_config else FREE_CHAT_CONFIG_PATH
         with open(config_path, "rb") as f:
