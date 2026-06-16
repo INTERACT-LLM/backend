@@ -1,5 +1,7 @@
 # LLM Hosting
-Configuration is done via env files. The sections below describe my setup, which splits into `.env.local` (dev) and `.env.prod` (production). See my configutations below:
+Configuration is done via env files. The sections below describe my setup, which splits into `.env.local` (dev) and `.env.prod` (production). See my configutations below. 
+
+> The model set as `DEFAULT_MODEL` must already be downloaded and running on the configured Ollama or vLLM instance.
 
 ## 👩🏻‍💻 Development 
 For `env.local`, I would run Ollama locally on my Macbook and point to it like this:
@@ -7,11 +9,8 @@ For `env.local`, I would run Ollama locally on my Macbook and point to it like t
 ```ini
 LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434/v1
-AVAILABLE_MODELS=llama3.2:3b,smollm2:360m
 DEFAULT_MODEL=llama3.2:3b
 ```
-
-> Ollama supports multiple models, and the user can switch between them at runtime. vLLM is bound to a single model. Make sure each model in `AVAILABLE_MODELS` has been pulled with `ollama pull <model>` before starting.
 
 ### Install Ollama
 Requires installing Ollama and making sure it is running: [https://ollama.com/download](https://ollama.com/download)
@@ -22,11 +21,8 @@ For `.env.prod`, I'm running vLLM served on a Nvidia DGX:
 ```ini
 LLM_PROVIDER=vllm
 VLLM_BASE_URL=https://your-server.dk/v1
-AVAILABLE_MODELS=google/gemma-4-26B-A4B-it
 DEFAULT_MODEL=google/gemma-4-26B-A4B-it
 ```
-
-> The model set as `DEFAULT_MODEL` must already be downloaded and running on the configured Ollama or vLLM instance.
 
 ### Installing vLLM 
 I'm running on the Nvidia DGX, having followed their guide for downloading a specific docker image of vLLM (which works with gemma4): [https://build.nvidia.com/spark/vllm/instructions](https://build.nvidia.com/spark/vllm/instructions).
