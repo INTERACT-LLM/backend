@@ -1,9 +1,10 @@
 """
 Data shapes for chats.
 """
+import uuid
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.environments.session import SessionConfig
 
@@ -12,7 +13,12 @@ ProviderName = Literal["ollama", "vllm", "anthropic"]
 ChatStatus = Literal["active", "terminated"]
 
 
+def _new_message_id() -> str:
+    return f"msg-{uuid.uuid4()}"
+
+
 class ChatMessage(BaseModel):
+    id: str = Field(default_factory=_new_message_id)  # links a message to its feedback
     role: str
     content: str
     synthetic: bool = False   # for the mixed_intiative user message that prompts the tutor to respond first

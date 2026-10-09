@@ -66,9 +66,15 @@ def generate_immediate_feedback(
 ):
     feedback_model, state = _load_feedback_model(lesson_id, chat_id)
 
+    # Only role and content go to the LLM, never our bookkeeping fields (id, synthetic).
+    llm_user_message = {
+        "role": last_user_message["role"],
+        "content": last_user_message["content"],
+    }
+
     messages = [
         {"role": "system", "content": feedback_model.immediate_feedback_prompt},
-        last_user_message,
+        llm_user_message,
     ]
 
     client, resolved_model = get_client(state.provider)

@@ -12,7 +12,7 @@ from app.models.llms.chat_model import ChatModel
 from app.services.chat import start_chat, handle_message
 from app.services.model_config import settings
 from app.services.provider_state import provider_state # for fallback logic
-from app.services.store_interactions.store_chat import create_chat, get_chat, delete_chat
+from app.services.store_interactions.store_chat import create_chat, get_chat
 from app.services.store_interactions.store_session import get_session
 
 router = APIRouter()

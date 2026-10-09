@@ -21,6 +21,9 @@ LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
 
 TUTOR_START_PROMPT = "Please begin the lesson. Start the conversation in the target language."
 
+# fields that only exist for our own bookkeeping. Never sent to the LLM.
+INTERNAL_FIELDS = {"synthetic", "id"}
+
 
 def _build_chat_model(state: ChatState) -> ChatModel:
     """Build a ChatModel from the snapshotted config and lesson. Called once per chat."""
@@ -69,7 +72,7 @@ def _terminate_on_failure(state: ChatState, exc: Exception) -> None:
 def _stream_response(state: ChatState) -> Generator[str, None, None]:
     """
     Stream one assistant turn, append the result to state, and persist.
-    Excludes internal fields (synthetic) before sending to the LLM.
+    Excludes internal fields (synthetic, id) before sending to the LLM.
 
     On provider failure: terminate the chat, flip ProviderState (if primary),
     yield an error event the frontend can act on.
@@ -78,7 +81,7 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
         client, resolved_model = get_client(state.provider)
         stream = client.chat.completions.create(
             model=resolved_model,
-            messages=[m.model_dump(exclude={"synthetic"}) for m in state.messages],
+            messages=[m.model_dump(exclude=INTERNAL_FIELDS) for m in state.messages],
             stream=True,
             max_tokens=400,
         )
