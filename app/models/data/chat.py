@@ -24,6 +24,15 @@ class ChatMessage(BaseModel):
     content: str
     synthetic: bool = False   # for the mixed_intiative user message that prompts the tutor to respond first
 
+class TabuViolation(BaseModel):
+    word: str          # the forbidden word the learner used
+    message_id: str    # links to ChatMessage.id
+    created_at: datetime | None = None
+
+class TabuState(BaseModel):
+    secret_word: str
+    forbidden_words: list[str]
+    violations: list[TabuViolation] = Field(default_factory=list)
 
 class ChatState(BaseModel):
     chat_id: str
@@ -32,6 +41,9 @@ class ChatState(BaseModel):
     tutor_starts: bool = False
     snapshotted_config: SessionConfig
     messages: list[ChatMessage] = []
+
+    # for tabu
+    tabu: TabuState | None = None
 
     # Provider binding: snapshotted at chat creation, immutable for the chat's lifetime.
     provider: ProviderName

@@ -2,7 +2,6 @@
 API for getting lesson content and generating lesson plans based on user input.
 """
 from pathlib import Path
-import random
 from fastapi import APIRouter, HTTPException, Query
 from app.models.llms.chat_model import ChatModel
 from app.models.llms.feedback_model import FeedbackModel
@@ -49,11 +48,14 @@ async def get_game_state(lesson_id: str, chat_id: str = Query(...)):
     instructions = lesson.lesson_instructions
 
     if isinstance(instructions, TabuInstructions):
-        secret = random.choice(instructions.vocabulary)
+        # the secret word was picked and saved when the chat was created
+        state = get_chat(chat_id)
+        if not state or state.tabu is None:
+            raise HTTPException(status_code=404, detail="No tabu game for this chat")
         return {
             "game_type": "tabu",
-            "secret_word": secret.word,
-            "forbidden_words": secret.forbidden_words,
+            "secret_word": state.tabu.secret_word,
+            "forbidden_words": state.tabu.forbidden_words,
         }
 
     if isinstance(instructions, TwentyQuestionsInstructions):
@@ -69,6 +71,10 @@ async def get_game_state(lesson_id: str, chat_id: str = Query(...)):
 
 @router.get("/lessons/{lesson_id}/prompts")
 async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
+    """
+    Build the prompts for display in the ui. No llm is called here.
+    Uses the model this chat is bound to, so the shown prompt matches what the chat uses.
+    """
     if lesson_id == "undefined" or not lesson_id:
         raise HTTPException(status_code=400, detail="lesson_id is required")
     if chat_id == "undefined" or not chat_id:
@@ -83,10 +89,10 @@ async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
     chat_model = ChatModel(
         session_config=chat_state.snapshotted_config,
         lesson_config=lesson,
-        model_id="llama-3.2",
+        model_id=chat_state.model,
     )
     immediate_feedback_model = FeedbackModel(
-        model_id="llama-3.2",
+        model_id=chat_state.model,
         session_config=chat_state.snapshotted_config,
         lesson_config=lesson,
     )
