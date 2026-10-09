@@ -9,14 +9,17 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
-from app.models.data.chat import CreateChatRequest, ChatMessageRequest, StartChatRequest, ChatState, TabuState
+from app.models.data.chat import (
+    CreateChatRequest, ChatMessageRequest, StartChatRequest,
+    ChatState, ChatMessage, TabuState, TabuViolation,
+)
 from app.models.environments.lesson import TabuInstructions
 from app.models.llms.chat_model import ChatModel
 from app.services.chat import start_chat, handle_message
 from app.services.load_lessons import load_lesson
 from app.services.model_config import settings
 from app.services.provider_state import provider_state # for fallback logic
-from app.services.store_interactions.store_chat import create_chat, get_chat
+from app.services.store_interactions.store_chat import create_chat, get_chat, save_chat, now_local
 from app.services.store_interactions.store_session import get_session
 
 router = APIRouter()
@@ -34,6 +37,24 @@ def _new_tabu_state(lesson_id: str | None) -> TabuState | None:
         return None
     card = random.choice(lesson.lesson_instructions.vocabulary)
     return TabuState(secret_word=card.word, forbidden_words=card.forbidden_words)
+
+
+def _record_tabu_violations(state: ChatState, message: ChatMessage) -> None:
+    """
+    Save every forbidden word used in the learner's message.
+    Same rule as useTabuGame: case-insensitive, word found anywhere in the text.
+    """
+    text = message.content.lower()
+    hits = [word for word in state.tabu.forbidden_words if word.lower() in text]
+    if not hits:
+        return
+
+    now = now_local()
+    for word in hits:
+        state.tabu.violations.append(
+            TabuViolation(word=word, message_id=message.id, created_at=now)
+        )
+    save_chat(state)
 
 
 @router.post("/chat")
@@ -102,7 +123,11 @@ def chat_start(req: StartChatRequest):
 
 @router.post("/chat/message")
 def chat_message(req: ChatMessageRequest):
-    """Send a message and stream the tutor's response."""
+    """
+    Send a message and stream the tutor's response.
+    In tabu chats, violations are saved before streaming starts,
+    so handle_message loads a chat that already contains them.
+    """
     state = get_chat(req.chat_id)
     if not state:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -115,6 +140,9 @@ def chat_message(req: ChatMessageRequest):
                 "message": "This conversation ended. Please start a new one.",
             },
         )
+
+    if state.tabu is not None and req.message.role == "user" and not req.message.synthetic:
+        _record_tabu_violations(state, req.message)
 
     return StreamingResponse(
         handle_message(chat_id=req.chat_id, message=req.message),
