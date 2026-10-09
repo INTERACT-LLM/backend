@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 from app.models.data.chat import ChatState
 
 # setup stuff (path + timesone)
-CHATS_DIR = Path(__file__).parents[3] / "storage" / "chats"
+CHATS_DIR = Path(__file__).parents[4] / "storage" / "chats"
 CHATS_DIR.mkdir(parents=True, exist_ok=True)
 
 TIMEZONE = ZoneInfo("Europe/Copenhagen")

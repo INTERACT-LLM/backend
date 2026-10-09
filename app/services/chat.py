@@ -13,7 +13,7 @@ from collections.abc import Generator
 from app.models.data.chat import ChatMessage, ChatState
 from app.models.llms.chat_model import ChatModel
 from app.services.load_lessons import load_lesson
-from app.services.store_chat import get_chat, create_chat
+from app.services.store_interactions.store_chat import get_chat, create_chat
 from app.services.model_config import get_client
 from app.services.provider_state import provider_state
 

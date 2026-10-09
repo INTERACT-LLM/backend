@@ -9,7 +9,7 @@ from app.models.llms.feedback_model import FeedbackModel
 from app.models.environments.lesson import TabuInstructions, TwentyQuestionsInstructions
 from app.services.game_utils import pick_secret_20Q
 from app.services.load_lessons import load_all_lessons, load_lesson
-from app.services.store_chat import get_chat
+from app.services.store_interactions.store_chat import get_chat
 
 router = APIRouter()
 

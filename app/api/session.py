@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.models.environments.session import SessionConfig, UserProfile
-from app.services.store_session import create_session, get_session, update_session, delete_session
+from app.services.store_interactions.store_session import create_session, get_session, update_session, delete_session
 
 router = APIRouter()
 

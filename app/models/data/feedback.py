@@ -1,4 +1,8 @@
-from pydantic import BaseModel
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from pydantic import BaseModel, Field 
+
+TIMEZONE = ZoneInfo("Europe/Copenhagen")
 
 class FeedbackResponse(BaseModel):
     has_language_error: bool

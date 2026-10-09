@@ -13,7 +13,7 @@ from app.models.data.feedback import FeedbackResponse, GeneralFeedbackResponse
 from app.models.llms.feedback_model import FeedbackModel
 from app.services.load_lessons import load_lesson
 from app.services.model_config import get_client
-from app.services.store_chat import get_chat
+from app.services.store_interactions.store_chat import get_chat
 
 LESSONS_DIR = Path(__file__).parents[2] / "app" / "data" / "lessons"
 
