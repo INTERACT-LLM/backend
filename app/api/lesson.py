@@ -88,14 +88,14 @@ async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
         raise HTTPException(status_code=404, detail="Lesson or chat not found")
 
     chat_model = ChatModel(
-        session_config=chat_state.snapshotted_config,
-        chat_id=chat_state.chat_id,  # CHANGED: ChatModel now requires it
+        config=chat_state.config,  
+        chat_id=chat_state.chat_id,
         lesson_config=lesson,
-        model_id=chat_state.model,
+        model_id=chat_state.config.model,  
     )
     immediate_feedback_model = FeedbackModel(
-        model_id=chat_state.model,
-        session_config=chat_state.snapshotted_config,
+        model_id=chat_state.config.model,  
+        config=chat_state.config,
         lesson_config=lesson,
     )
 

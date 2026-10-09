@@ -13,8 +13,8 @@ Each save sets timestamps on the state:
     updated_at: refreshed on every save
 The folder date is taken from created_at, so the two always agree.
 
-It holds the full ChatState: messages, snapshotted session config,
-lesson_id, timestamps, and any fields added to ChatState or ChatMessage later.
+It holds the full ChatState: messages, the chat's frozen config (lesson, model,
+learner profile), timestamps, and any fields added to ChatState or ChatMessage later.
 Merging chats with feedback happens during data analysis, not here.
 On failure in saving, logs error.
 """
@@ -45,7 +45,7 @@ def _safe(name: str) -> str:
 
 
 def _username_of(state: ChatState) -> str:
-    return state.snapshotted_config.user.name
+    return state.config.user.name  
 
 
 def now_local() -> datetime:

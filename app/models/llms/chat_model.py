@@ -5,7 +5,7 @@ No LLM calls — IO lives in services/chat.py.
 import tomllib
 from pathlib import Path
 
-from app.models.environments.session import SessionConfig
+from app.models.data.chat import ChatConfig
 from app.models.environments.lesson import Lesson
 from app.services.game_utils import pick_secret_20Q
 
@@ -18,20 +18,20 @@ class ChatModel:
     """
     Holds chat model config and builds the system prompt from:
       - data/chat.toml or data/free_chat.toml  (base system prompt)
-      - session_config                          (user facts)
+      - config                                  (the chat's frozen config, incl. user facts)
       - lesson_config                           (lesson-specific instructions, optional)
       - chat_id                                 (seed for deterministic game choices, e.g. the 20Q secret)
     """
 
     def __init__(
         self,
-        session_config: SessionConfig,
-        chat_id: str, 
+        config: ChatConfig,  
+        chat_id: str,
         lesson_config: Lesson | None = None,
         model_id: str = "llama3.2:3b",
     ):
-        self.session_config = session_config
-        self.chat_id = chat_id  
+        self.config = config  
+        self.chat_id = chat_id
         self.lesson_config = lesson_config
         self.model_id = model_id
 
@@ -42,21 +42,21 @@ class ChatModel:
         self.system_prompt = self._build_system_prompt()
 
     def _build_system_prompt(self) -> str:
-        session = self.session_config
+        config = self.config  
 
         base = self._chat_config["system_prompt"].format(
-            language=session.language,
+            language=config.language,
         )
 
         general_parts = [
             "PERSONALIZATION INSTRUCTIONS:",
-            f"You are teaching the language: {session.language}",
+            f"You are teaching the language: {config.language}",
         ]
-        if session.user.proficiency_level:
-            general_parts.append(f"Student level is: {session.user.proficiency_level}")
-        if session.user.preferences:
+        if config.user.proficiency_level:
+            general_parts.append(f"Student level is: {config.user.proficiency_level}")
+        if config.user.preferences:
             general_parts.append(
-                f"Here is some information about the student's preferences: {session.user.preferences}"
+                f"Here is some information about the student's preferences: {config.user.preferences}"
             )
 
         general = "\n\n".join(general_parts)

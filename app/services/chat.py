@@ -1,9 +1,9 @@
 """
 Chat service — handles message turns and streaming.
 History is stored in ChatState via store_chat.
-System prompt is built once from the snapshotted session config.
+System prompt is built once from the chat's frozen config.
 
-Provider and model are bound to the chat at creation time (see ChatState).
+Provider and model are bound to the chat at creation time (see ChatConfig).
 If the bound provider fails mid-conversation, the chat is terminated; the
 user must start a new chat (which will bind to whichever provider is then active).
 """
@@ -26,17 +26,17 @@ INTERNAL_FIELDS = {"synthetic", "id"}
 
 
 def _build_chat_model(state: ChatState) -> ChatModel:
-    """Build a ChatModel from the snapshotted config and lesson. Called once per chat."""
+    """Build a ChatModel from the chat's config and lesson. Called once per chat."""
     lesson = (
-        load_lesson(lesson_path=LESSONS_DIR / f"{state.lesson_id}.toml")
-        if state.lesson_id
+        load_lesson(lesson_path=LESSONS_DIR / f"{state.config.lesson_id}.toml")  
+        if state.config.lesson_id  
         else None
     )
     return ChatModel(
-        session_config=state.snapshotted_config,
-        chat_id=state.chat_id,  # CHANGED: seed for the 20Q secret, same as the game-state endpoint
+        config=state.config,  
+        chat_id=state.chat_id,  # seed for the 20Q secret, same as the game-state endpoint
         lesson_config=lesson,
-        model_id=state.model,
+        model_id=state.config.model, 
     )
 
 
@@ -59,7 +59,7 @@ def _terminate_on_failure(state: ChatState, exc: Exception) -> None:
 
     # Only flip ProviderState if this was the primary that failed.
     # Anthropic failures don't trigger failover (there's nowhere to fail over to).
-    if state.provider == provider_state.primary:
+    if state.config.provider == provider_state.primary:  
         # Fire-and-forget: this is sync code, schedule the async flip.
         import asyncio
         try:
@@ -78,8 +78,9 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
     On provider failure: terminate the chat, flip ProviderState (if primary),
     yield an error event the frontend can act on.
     """
+    provider = state.config.provider #read once, used below
     try:
-        client, resolved_model = get_client(state.provider)
+        client, resolved_model = get_client(provider)
         stream = client.chat.completions.create(
             model=resolved_model,
             messages=[m.model_dump(exclude=INTERNAL_FIELDS) for m in state.messages],
@@ -101,9 +102,9 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
         yield "data: [DONE]\n\n"
 
     except Exception as exc:
-        print(f"[chat] Provider {state.provider!r} failed for chat {state.chat_id}: {exc}")
+        print(f"[chat] Provider {provider!r} failed for chat {state.chat_id}: {exc}")
         _terminate_on_failure(state, exc)
-        yield f'data: {{"error": "provider_unavailable", "provider": "{state.provider}"}}\n\n'
+        yield f'data: {{"error": "provider_unavailable", "provider": "{provider}"}}\n\n'
         yield "data: [DONE]\n\n"
 
 

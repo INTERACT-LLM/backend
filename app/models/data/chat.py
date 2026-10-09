@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.models.environments.session import SessionConfig, UserProfile  
+from app.models.environments.user import UserProfile  
 
 
 ProviderName = Literal["ollama", "vllm", "anthropic"]
@@ -34,27 +34,40 @@ class TabuState(BaseModel):
     forbidden_words: list[str]
     violations: list[TabuViolation] = Field(default_factory=list)
 
-class ChatState(BaseModel):
-    chat_id: str
+
+# Everything that shaped the tutor's behaviour, frozen at chat creation.
+class ChatConfig(BaseModel):
     lesson_id: str | None = None
     tutor_starts: bool = False
-    snapshotted_config: SessionConfig
-    messages: list[ChatMessage] = []
 
-    # for tabu
-    tabu: TabuState | None = None
-
-    # Provider binding: snapshotted at chat creation, immutable for the chat's lifetime.
+    # provider binding: immutable for the chat's lifetime.
     provider: ProviderName
     model: str
 
-    # Lifecycle: chats are terminated (not deleted) when the provider becomes unreachable.
+    user: UserProfile
+
+    @property
+    def language(self) -> str:
+        return self.user.language
+
+
+class ChatState(BaseModel):
+    # identity and lifecycle
+    chat_id: str
+    
+    # chats are terminated (not deleted) when the provider becomes unreachable.
     status: ChatStatus = "active"
     terminated_reason: str | None = None
-
-    # dates
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+    # lesson_id, tutor_starts, provider, model
+    config: ChatConfig
+
+    # game state
+    tabu: TabuState | None = None
+
+    messages: list[ChatMessage] = []
 
 
 class CreateChatRequest(BaseModel):

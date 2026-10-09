@@ -1,5 +1,5 @@
 """
-Session-specific config
+Learner profile!
 """
 
 from pydantic import BaseModel
@@ -11,10 +11,3 @@ class UserProfile(BaseModel):
     language: str = "Spanish"
     proficiency_level: Literal["beginner", "intermediate", "advanced"]
     preferences: str | None = None
-
-class SessionConfig(BaseModel):
-    user: UserProfile
-
-    @property
-    def language(self) -> str:
-        return self.user.language

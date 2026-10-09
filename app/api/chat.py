@@ -11,10 +11,9 @@ from fastapi.responses import StreamingResponse
 
 from app.models.data.chat import (
     CreateChatRequest, ChatMessageRequest, StartChatRequest,
-    ChatState, ChatMessage, TabuState, TabuViolation,
+    ChatState, ChatConfig, ChatMessage, TabuState, TabuViolation,  
 )
 from app.models.environments.lesson import TabuInstructions
-from app.models.environments.session import SessionConfig  
 from app.models.llms.chat_model import ChatModel
 from app.services.chat import start_chat, handle_message
 from app.services.load_lessons import load_lesson
@@ -60,12 +59,10 @@ def _record_tabu_violations(state: ChatState, message: ChatMessage) -> None:
 @router.post("/chat")
 async def create_chat_endpoint(req: CreateChatRequest):
     """
-    Create a new chat. Snapshots the learner profile sent with the request and
-    binds the chat to whichever provider is currently active.
+    Create a new chat. Freezes everything that shapes the tutor (lesson, model,
+    learner profile) into the chat's config, bound to whichever provider is active.
     For tabu lessons, the secret word is picked here and saved with the chat.
     """
-    snapshot = SessionConfig(user=req.user_profile)
-
     # Bind to whichever provider is currently active.
     active = provider_state.active
     if active == "anthropic":
@@ -76,11 +73,13 @@ async def create_chat_endpoint(req: CreateChatRequest):
     chat_id = f"chat-{uuid.uuid4()}"
     state = ChatState(
         chat_id=chat_id,
-        lesson_id=req.lesson_id,
-        tutor_starts=req.tutor_starts,
-        snapshotted_config=snapshot,  
-        provider=active,
-        model=bound_model,
+        config=ChatConfig(
+            lesson_id=req.lesson_id,
+            tutor_starts=req.tutor_starts,
+            provider=active,
+            model=bound_model,
+            user=req.user_profile,
+        ),
         tabu=_new_tabu_state(req.lesson_id),
     )
     create_chat(state)
@@ -162,8 +161,8 @@ async def get_free_chat_prompt(chat_id: str = Query(...)):
         raise HTTPException(status_code=404, detail="Chat not found")
 
     chat_model = ChatModel(
-        session_config=state.snapshotted_config,
-        chat_id=state.chat_id,  #
+        config=state.config,  
+        chat_id=state.chat_id,
         lesson_config=None,
     )
     return {"chat_system_prompt": chat_model.system_prompt}

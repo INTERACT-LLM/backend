@@ -25,7 +25,7 @@ def _load_feedback_model(
 ):
     """
     Shared setup. Returns (feedback_model, state) so callers can read
-    state.provider and state.model for the LLM call.
+    state.config.provider and state.config.model for the LLM call.
     """
     state = get_chat(chat_id)
     if not state:
@@ -38,8 +38,8 @@ def _load_feedback_model(
     )
 
     feedback_model = FeedbackModel(
-        model_id=state.model,
-        session_config=state.snapshotted_config,
+        model_id=state.config.model,  
+        config=state.config,  
         lesson_config=lesson_config,
         **kwargs,
     )
@@ -77,7 +77,7 @@ def generate_immediate_feedback(
         llm_user_message,
     ]
 
-    client, resolved_model = get_client(state.provider)
+    client, resolved_model = get_client(state.config.provider)  
     try:
         response = client.chat.completions.create(model=resolved_model, messages=messages)
     except Exception as e:
@@ -118,7 +118,7 @@ def generate_general_feedback(
 
     print(f"general_feedback_prompt:\n{feedback_model.general_feedback_prompt}")
 
-    client, resolved_model = get_client(state.provider)
+    client, resolved_model = get_client(state.config.provider)  
     try:
         response = client.chat.completions.create(
             model=resolved_model,
