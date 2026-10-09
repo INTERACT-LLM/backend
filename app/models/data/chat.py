@@ -1,6 +1,7 @@
 """
 Data shapes for chats.
 """
+from datetime import datetime
 import uuid
 from typing import Literal
 
@@ -39,6 +40,10 @@ class ChatState(BaseModel):
     # Lifecycle: chats are terminated (not deleted) when the provider becomes unreachable.
     status: ChatStatus = "active"
     terminated_reason: str | None = None
+
+    # dates
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class CreateChatRequest(BaseModel):

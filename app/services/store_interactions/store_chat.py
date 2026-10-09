@@ -8,8 +8,13 @@ Layout:
 The date is the day the chat was first saved, created when chat starts (create_chat),
 overwritten throughout the conversation (peter's recommendation)
 
+Each save sets timestamps on the state:
+    created_at: set on the first save, never changed afterwards
+    updated_at: refreshed on every save
+The folder date is taken from created_at, so the two always agree.
+
 It holds the full ChatState: messages, snapshotted session config,
-lesson_id, and any fields added to ChatState or ChatMessage later.
+lesson_id, timestamps, and any fields added to ChatState or ChatMessage later.
 Merging chats with feedback happens during data analysis, not here.
 On failure in saving, logs error.
 """
@@ -43,29 +48,43 @@ def _username_of(state: ChatState) -> str:
     return state.snapshotted_config.user.name
 
 
-def _today() -> str:
-    return datetime.now(TIMEZONE).date().isoformat()
+def now_local() -> datetime:
+    """Current time in Copenhagen, timezone-aware, to the second. Shared with store_feedback."""
+    return datetime.now(TIMEZONE).replace(microsecond=0)
+
+
+def _set_timestamps(state: ChatState) -> None:
+    """
+    Set created_at once (first save) and refresh updated_at on every save.
+    Mutates the state so the in-memory copy keeps the same created_at.
+    """
+    now = now_local()
+    if state.created_at is None:
+        state.created_at = now
+    state.updated_at = now
 
 
 # pathing
 def find_chat_path(chat_id: str) -> Path | None:
     """Locate an existing chat file when only the chat_id is known."""
-    matches = list(CHATS_DIR.glob(f"*/*/{_safe(chat_id)}.json"))  
+    matches = list(CHATS_DIR.glob(f"*/*/{_safe(chat_id)}.json"))
     return matches[0] if matches else None
 
 
 def _path_for(state: ChatState) -> Path:
     """
     Reuse the existing file if there is one, so the date never changes.
+    New chats go in the folder for the day of created_at.
+    Call _set_timestamps(state) before this, so created_at is set.
     """
     existing = find_chat_path(state.chat_id)
     if existing is not None:
         return existing
     return (
         CHATS_DIR
-        / _today()
+        / state.created_at.date().isoformat()
         / _safe(_username_of(state))
-        / f"{_safe(state.chat_id)}.json" 
+        / f"{_safe(state.chat_id)}.json"
     )
 
 
@@ -77,6 +96,7 @@ def save_chat(state: ChatState) -> bool:
     """
     tmp_path: Path | None = None
     try:
+        _set_timestamps(state)
         path = _path_for(state)
         path.parent.mkdir(parents=True, exist_ok=True)
 

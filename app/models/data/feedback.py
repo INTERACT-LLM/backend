@@ -42,4 +42,4 @@ class FeedbackRecord(BaseModel):
     feedback: FeedbackResponse | None = None # None when feedback failed
     detail: str | None = None                # error message, if any
     model: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(TIMEZONE))
+    created_at: datetime | None = None

@@ -3,15 +3,17 @@ JSONL store for immediate feedback.
 Lives next to the chat file:
     storage/chats/<date>/<username>/<chat_id>.feedback.jsonl
 One line per feedback event. Append-only, so it never races with save_chat.
+Each record gets a created_at timestamp (Copenhagen time) unless the caller set one.
+No updated_at: a line is written once and never changed.
 On failure, logs failure !
 """
-import logging  
+import logging
 from pathlib import Path
 
 from app.models.data.feedback import FeedbackRecord
-from .store_chat import find_chat_path
+from .store_chat import find_chat_path, now_local
 
-logger = logging.getLogger(__name__)  
+logger = logging.getLogger(__name__)
 
 
 def _feedback_path(chat_id: str) -> Path | None:
@@ -24,19 +26,24 @@ def _feedback_path(chat_id: str) -> Path | None:
 
 def save_feedback(record: FeedbackRecord) -> bool:
     """
-    Append one record.
+    Append one record, with a created_at timestamp.
     Returns True on success. On failure, logs the error and returns False.
     """
-    try:  
+    try:
         path = _feedback_path(record.chat_id)
         if path is None:
             logger.warning("No chat file for %s, feedback not saved", record.chat_id)
             return False
+
+        # set the timestamp only once we know the record will be written
+        if record.created_at is None:
+            record.created_at = now_local()
+
         with path.open("a", encoding="utf-8") as f:
             f.write(record.model_dump_json() + "\n")
         return True
 
-    except Exception:  
+    except Exception:
         logger.exception("Could not save feedback for chat %s", record.chat_id)
         return False
 
