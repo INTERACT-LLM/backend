@@ -105,8 +105,7 @@ def chat_message(req: ChatMessageRequest):
 
 @router.delete("/chat/{chat_id}")
 async def end_chat(chat_id: str):
-    """End a chat and clean up its history."""
-    delete_chat(chat_id)
+    """End a chat. The saved JSON file stays on disk."""
     return {"ok": True}
 
 

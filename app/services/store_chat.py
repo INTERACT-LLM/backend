@@ -1,20 +1,85 @@
 """
-In-memory store for active chats.
-Holds message history and snapshotted session config for each chat.
-A new chat is created each time a user starts a lesson or free chat session.
+JSON-file store for chats.
+Each chat is one file: storage/chats/<date>/<username>/<chat_id>.json
+The date is the day the chat was first saved (Danish time) and never changes
+afterwards, even if the chat runs past midnight.
+The file is created when the chat starts (create_chat) and overwritten on every
+save_chat call. It holds the full ChatState: messages, snapshotted session config,
+lesson_id, and any fields added to ChatState or ChatMessage later.
 """
+import re
+import tempfile
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
 from app.models.data.chat import ChatState
 
-_chats: dict[str, ChatState] = {}
+# setup stuff (path + timesone)
+CHATS_DIR = Path(__file__).parents[3] / "storage" / "chats"
+CHATS_DIR.mkdir(parents=True, exist_ok=True)
+
+TIMEZONE = ZoneInfo("Europe/Copenhagen")
 
 
-def create_chat(state: ChatState) -> None:
-    _chats[state.chat_id] = state
+def _safe(name: str) -> str:
+    """make sure that names are safe for folders e.g., søren -> s_ren """
+    return re.sub(r"[^A-Za-z0-9_-]", "_", name)
+
+
+def _username_of(state: ChatState) -> str:
+    return state.snapshotted_config.user.name
+
+
+def _today() -> str:
+    return datetime.now(TIMEZONE).date().isoformat()
+
+
+def _find_path(chat_id: str) -> Path | None:
+    """Locate an existing chat file when only the chat_id is known."""
+    matches = list(CHATS_DIR.glob(f"*/*/{_safe(chat_id)}.json"))
+    return matches[0] if matches else None
+
+
+def _path_for(state: ChatState) -> Path:
+    """Reuse the existing file if there is one, so the date never changes."""
+    existing = _find_path(state.chat_id)
+    if existing is not None:
+        return existing
+    return (
+        CHATS_DIR
+        / _today()
+        / _safe(_username_of(state))
+        / f"{_safe(state.chat_id)}.json"
+    )
+
+
+def save_chat(state: ChatState) -> None:
+    """Write the full state to disk, replacing any previous version atomically."""
+    path = _path_for(state)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+    ) as tmp:
+        tmp.write(state.model_dump_json(indent=2))
+        tmp_path = Path(tmp.name)
+
+    tmp_path.replace(path)
+
+
+# Kept so existing imports (chat_service, routers) keep working.
+create_chat = save_chat
 
 
 def get_chat(chat_id: str) -> ChatState | None:
-    return _chats.get(chat_id)
+    path = _find_path(chat_id)
+    if path is None:
+        return None
+    return ChatState.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 def delete_chat(chat_id: str) -> None:
-    _chats.pop(chat_id, None)
+    path = _find_path(chat_id)
+    if path is not None:
+        path.unlink()
