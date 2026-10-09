@@ -128,6 +128,8 @@ def generate_general_feedback(
     raw_output = response.choices[0].message.content.strip()
     feedback, error = _parse_json_response(raw_output, GeneralFeedbackResponse)
 
+    print(f"general_feedback raw_output:\n{raw_output}\nparse error: {error}")
+
     return {
         "GeneralFeedbackResponse": feedback,
         "raw_output": raw_output,
