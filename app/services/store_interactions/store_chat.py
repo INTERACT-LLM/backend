@@ -1,15 +1,19 @@
 """
 JSON-file store for chats.
-Each chat is one file: storage/chats/<date>/<username>/<chat_id>.json
-The date is the day the chat was first saved, created when chat starts (create_chat), 
+
+Layout:
+    storage/chats/<date>/<username>/<chat_id>.json             (this file)
+    storage/chats/<date>/<username>/<chat_id>.feedback.jsonl   (store_feedback)
+
+The date is the day the chat was first saved, created when chat starts (create_chat),
 overwritten throughout the conversation (peter's recommendation)
 
 It holds the full ChatState: messages, snapshotted session config,
 lesson_id, and any fields added to ChatState or ChatMessage later.
-Immediate feedback lives next to it in <chat_id>.feedback.jsonl (see store_feedback).
+Merging chats with feedback happens during data analysis, not here.
 On failure in saving, logs error.
 """
-import logging  
+import logging
 import re
 import tempfile
 from datetime import datetime
@@ -18,10 +22,10 @@ from zoneinfo import ZoneInfo
 
 from app.models.data.chat import ChatState
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 # setup stuff (path + timezone)
-CHATS_DIR = Path(__file__).parents[4] / "storage" / "chats" 
+CHATS_DIR = Path(__file__).parents[4] / "storage" / "chats"
 CHATS_DIR.mkdir(parents=True, exist_ok=True)
 
 TIMEZONE = ZoneInfo("Europe/Copenhagen")
@@ -46,7 +50,7 @@ def _today() -> str:
 # pathing
 def find_chat_path(chat_id: str) -> Path | None:
     """Locate an existing chat file when only the chat_id is known."""
-    matches = list(CHATS_DIR.glob(f"*/*/{_safe(chat_id)}.json"))
+    matches = list(CHATS_DIR.glob(f"*/*/{_safe(chat_id)}.json"))  
     return matches[0] if matches else None
 
 
@@ -61,31 +65,31 @@ def _path_for(state: ChatState) -> Path:
         CHATS_DIR
         / _today()
         / _safe(_username_of(state))
-        / f"{_safe(state.chat_id)}.json"
+        / f"{_safe(state.chat_id)}.json" 
     )
 
 
-# saving and getting  # o deleting anymore
-def save_chat(state: ChatState) -> bool:  # returns bool
+# saving and getting
+def save_chat(state: ChatState) -> bool:
     """
     Write the full state to disk, replacing any previous version atomically.
     Returns True on success. On failure, logs the error and returns False.
     """
-    tmp_path: Path | None = None  
-    try:  ## try saving, abort if not!
+    tmp_path: Path | None = None
+    try:
         path = _path_for(state)
         path.parent.mkdir(parents=True, exist_ok=True)
 
         with tempfile.NamedTemporaryFile(
             "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
         ) as tmp:
-            tmp_path = Path(tmp.name)  
+            tmp_path = Path(tmp.name)
             tmp.write(state.model_dump_json(indent=2))
 
         tmp_path.replace(path)
         return True
 
-    except Exception: 
+    except Exception:
         logger.exception("Could not save chat %s", state.chat_id)
         if tmp_path is not None:
             tmp_path.unlink(missing_ok=True)
