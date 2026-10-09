@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.models.environments.session import SessionConfig
+from app.models.environments.session import SessionConfig, UserProfile  
 
 
 ProviderName = Literal["ollama", "vllm", "anthropic"]
@@ -36,7 +36,6 @@ class TabuState(BaseModel):
 
 class ChatState(BaseModel):
     chat_id: str
-    session_id: str
     lesson_id: str | None = None
     tutor_starts: bool = False
     snapshotted_config: SessionConfig
@@ -59,10 +58,10 @@ class ChatState(BaseModel):
 
 
 class CreateChatRequest(BaseModel):
-    session_id: str
     lesson_id: str | None = None
     tutor_starts: bool = False
     model_id: str | None = None
+    user_profile: UserProfile
 
 
 class ChatMessageRequest(BaseModel):

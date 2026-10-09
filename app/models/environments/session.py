@@ -1,4 +1,4 @@
-""" 
+"""
 Session-specific config
 """
 
@@ -6,14 +6,13 @@ from pydantic import BaseModel
 from typing import Literal
 
 
-class UserProfile(BaseModel):  
+class UserProfile(BaseModel):
     name: str = "Mina"
     language: str = "Spanish"
     proficiency_level: Literal["beginner", "intermediate", "advanced"]
     preferences: str | None = None
 
 class SessionConfig(BaseModel):
-    session_id: str
     user: UserProfile
 
     @property

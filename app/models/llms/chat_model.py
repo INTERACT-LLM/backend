@@ -20,15 +20,18 @@ class ChatModel:
       - data/chat.toml or data/free_chat.toml  (base system prompt)
       - session_config                          (user facts)
       - lesson_config                           (lesson-specific instructions, optional)
+      - chat_id                                 (seed for deterministic game choices, e.g. the 20Q secret)
     """
 
     def __init__(
         self,
         session_config: SessionConfig,
+        chat_id: str, 
         lesson_config: Lesson | None = None,
         model_id: str = "llama3.2:3b",
     ):
         self.session_config = session_config
+        self.chat_id = chat_id  
         self.lesson_config = lesson_config
         self.model_id = model_id
 
@@ -103,7 +106,7 @@ class ChatModel:
             case TwentyQuestionsInstructions():
                 secret_word = pick_secret_20Q(
                     lesson_instructions.vocabulary,
-                    self.session_config.session_id
+                    self.chat_id,
                 )
                 return (
                     f"Secret word: {secret_word}. "

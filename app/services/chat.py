@@ -34,6 +34,7 @@ def _build_chat_model(state: ChatState) -> ChatModel:
     )
     return ChatModel(
         session_config=state.snapshotted_config,
+        chat_id=state.chat_id,  # CHANGED: seed for the 20Q secret, same as the game-state endpoint
         lesson_config=lesson,
         model_id=state.model,
     )

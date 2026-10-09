@@ -59,6 +59,7 @@ async def get_game_state(lesson_id: str, chat_id: str = Query(...)):
         }
 
     if isinstance(instructions, TwentyQuestionsInstructions):
+        # same seed as ChatModel (the chat_id), so the UI and the tutor agree on the word
         secret = pick_secret_20Q(instructions.vocabulary, chat_id)
         return {
             "game_type": "twenty_questions",
@@ -88,6 +89,7 @@ async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
 
     chat_model = ChatModel(
         session_config=chat_state.snapshotted_config,
+        chat_id=chat_state.chat_id,  # CHANGED: ChatModel now requires it
         lesson_config=lesson,
         model_id=chat_state.model,
     )

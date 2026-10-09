@@ -14,13 +14,13 @@ from app.models.data.chat import (
     ChatState, ChatMessage, TabuState, TabuViolation,
 )
 from app.models.environments.lesson import TabuInstructions
+from app.models.environments.session import SessionConfig  
 from app.models.llms.chat_model import ChatModel
 from app.services.chat import start_chat, handle_message
 from app.services.load_lessons import load_lesson
 from app.services.model_config import settings
 from app.services.provider_state import provider_state # for fallback logic
 from app.services.store_interactions.store_chat import create_chat, get_chat, save_chat, now_local
-from app.services.store_interactions.store_session import get_session
 
 router = APIRouter()
 
@@ -60,13 +60,11 @@ def _record_tabu_violations(state: ChatState, message: ChatMessage) -> None:
 @router.post("/chat")
 async def create_chat_endpoint(req: CreateChatRequest):
     """
-    Create a new chat. Snapshots the current session config and binds the chat
-    to whichever provider is currently active.
+    Create a new chat. Snapshots the learner profile sent with the request and
+    binds the chat to whichever provider is currently active.
     For tabu lessons, the secret word is picked here and saved with the chat.
     """
-    session_config = get_session(req.session_id)
-    if not session_config:
-        raise HTTPException(status_code=404, detail="Session not found")
+    snapshot = SessionConfig(user=req.user_profile)
 
     # Bind to whichever provider is currently active.
     active = provider_state.active
@@ -78,10 +76,9 @@ async def create_chat_endpoint(req: CreateChatRequest):
     chat_id = f"chat-{uuid.uuid4()}"
     state = ChatState(
         chat_id=chat_id,
-        session_id=req.session_id,
         lesson_id=req.lesson_id,
         tutor_starts=req.tutor_starts,
-        snapshotted_config=session_config,
+        snapshotted_config=snapshot,  
         provider=active,
         model=bound_model,
         tabu=_new_tabu_state(req.lesson_id),
@@ -166,6 +163,7 @@ async def get_free_chat_prompt(chat_id: str = Query(...)):
 
     chat_model = ChatModel(
         session_config=state.snapshotted_config,
+        chat_id=state.chat_id,  #
         lesson_config=None,
     )
     return {"chat_system_prompt": chat_model.system_prompt}
