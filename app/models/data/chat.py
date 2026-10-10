@@ -5,7 +5,7 @@ from datetime import datetime
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.environments.user import UserProfile  
 
@@ -35,8 +35,14 @@ class TabuState(BaseModel):
     violations: list[TabuViolation] = Field(default_factory=list)
 
 
+# everything that shaped the tutor's behaviour, frozen at chat creation.
 # Everything that shaped the tutor's behaviour, frozen at chat creation.
 class ChatConfig(BaseModel):
+    # Label for data analysis only, the app logic keeps using lesson_id.
+    # I use lesson_id being None to skip loading lessons, so it stays as it is.
+    # Empty placeholder here, always filled in from lesson_id by _set_chat_type.
+    chat_type: Literal["lesson", "free_chat"] | None = None
+
     lesson_id: str | None = None
     tutor_starts: bool = False
 
@@ -49,6 +55,12 @@ class ChatConfig(BaseModel):
     @property
     def language(self) -> str:
         return self.user.language
+
+    @model_validator(mode="after")
+    def _set_chat_type(self):
+        """'lesson' when the chat has a lesson_id, otherwise 'free_chat'."""
+        self.chat_type = "lesson" if self.lesson_id else "free_chat"
+        return self
 
 
 class ChatState(BaseModel):
