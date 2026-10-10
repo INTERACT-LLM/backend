@@ -4,6 +4,9 @@ Feedback service (separate API call from chat endpoint)
 Structured feedback response using OpenAI-compatible API (Ollama or vLLM or Anthropic).
 Provider and model are inherited from the chat the feedback is generated for —
 feedback uses the same provider as the conversation it analyses.
+
+Both feedback functions always return a dict with feedback_status "success" or "error",
+so the frontend can stop loading in both cases.
 """
 
 from pathlib import Path
@@ -46,17 +49,28 @@ def _load_feedback_model(
     return feedback_model, state
 
 
-def _parse_json_response(raw: str, model_cls):
+def _parse_json_response(raw: str | None, model_cls):
+    """
+    Try to turn the model's text into model_cls.
+    Returns (parsed, None) on success, (None, error message) on failure. Never raises.
+    """
+    if not raw:
+        return None, "Model returned an empty response"
+
+    # 1. the whole output is valid JSON
     try:
         return model_cls.model_validate_json(raw), None
     except Exception:
-        try:
-            match = re.search(r"\{.*\}", raw, re.DOTALL)
-            if match:
-                return model_cls.model_validate_json(match.group()), None
-        except Exception as e:
-            return None, str(e)
-    return None, "No valid JSON found in model output"
+        pass
+
+    # 2. JSON is wrapped in other text, e.g. ```json ... ``` or a sentence before it
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not match:
+        return None, "No valid JSON found in model output"
+    try:
+        return model_cls.model_validate_json(match.group()), None
+    except Exception as e:
+        return None, str(e)
 
 
 def generate_immediate_feedback(
@@ -87,7 +101,7 @@ def generate_immediate_feedback(
             "detail": f"Provider unavailable: {type(e).__name__}: {e}",
         }
 
-    raw_output = response.choices[0].message.content
+    raw_output = response.choices[0].message.content  # may be None, the parser handles it
     feedback, error = _parse_json_response(raw_output, FeedbackResponse)
     if error:
         return {"FeedbackResponse": None, "feedback_status": "error", "detail": error}
@@ -127,17 +141,20 @@ def generate_general_feedback(
     except Exception as e:
         return {
             "GeneralFeedbackResponse": None,
+            "feedback_status": "error",
             "raw_output": None,
             "error": f"Provider unavailable: {type(e).__name__}: {e}",
         }
 
-    raw_output = response.choices[0].message.content.strip()
+    # content can be None, so fall back to "" before strip()
+    raw_output = (response.choices[0].message.content or "").strip()
     feedback, error = _parse_json_response(raw_output, GeneralFeedbackResponse)
 
     print(f"general_feedback raw_output:\n{raw_output}\nparse error: {error}")
 
     return {
         "GeneralFeedbackResponse": feedback,
+        "feedback_status": "error" if error else "success",
         "raw_output": raw_output,
         "error": error,
     }
