@@ -2,8 +2,12 @@
 JSON-file store for chats.
 
 Layout:
-    storage/chats/<date>/<username>/<chat_id>.json             (this file)
-    storage/chats/<date>/<username>/<chat_id>.feedback.jsonl   (store_feedback)
+    storage/chats/<date>/<username>_<browser_id>/<chat_id>.json             (this file)
+    storage/chats/<date>/<username>_<browser_id>/<chat_id>.feedback.jsonl   (store_feedback)
+
+The browser_id is a random id the frontend creates once per browser and keeps in
+localStorage. Only its first 8 characters go in the folder name, so two participants
+who pick the same username get separate folders. The full id is saved in the JSON.
 
 The date is the day the chat was first saved, created when chat starts (create_chat),
 overwritten throughout the conversation (peter's recommendation)
@@ -18,6 +22,7 @@ learner profile), timestamps, and any fields added to ChatState or ChatMessage l
 Merging chats with feedback happens during data analysis, not here.
 On failure in saving, logs error.
 """
+
 import logging
 import re
 import tempfile
@@ -35,6 +40,8 @@ CHATS_DIR.mkdir(parents=True, exist_ok=True)
 
 TIMEZONE = ZoneInfo("Europe/Copenhagen")
 
+BROWSER_ID_CHARS = 8  # how much of the browser id goes in the folder name
+
 
 # get values
 def _safe(name: str) -> str:
@@ -44,8 +51,14 @@ def _safe(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "_", name)
 
 
-def _username_of(state: ChatState) -> str:
-    return state.config.user.name  
+def _user_folder(state: ChatState) -> str:
+    """
+    Folder name for one participant: username plus the start of their browser id,
+    e.g. "anna_3f2a9c1e". Same name in two browsers -> two folders.
+    """
+    user = state.config.user
+    short_id = _safe(user.browser_id)[:BROWSER_ID_CHARS]
+    return f"{_safe(user.name)}_{short_id}"
 
 
 def now_local() -> datetime:
@@ -83,7 +96,7 @@ def _path_for(state: ChatState) -> Path:
     return (
         CHATS_DIR
         / state.created_at.date().isoformat()
-        / _safe(_username_of(state))
+        / _user_folder(state)
         / f"{_safe(state.chat_id)}.json"
     )
 
