@@ -7,8 +7,8 @@ Provider and model are bound to the chat at creation time (see ChatConfig).
 If the bound provider fails mid-conversation, the chat is terminated; the
 user must start a new chat (which will bind to whichever provider is then active).
 
-Saving after a turn goes through _merge_latest, so events logged while the tutor
-was streaming (tabu guess, end reason) are not overwritten.
+Saving after a turn goes through _merge_latest inside chat_lock, so events logged
+while the tutor was streaming (tabu guess, end reason) are never overwritten.
 """
 from pathlib import Path
 from collections.abc import Generator
@@ -16,7 +16,7 @@ from collections.abc import Generator
 from app.models.data.chat import ChatMessage, ChatState
 from app.models.llms.chat_model import ChatModel
 from app.services.load_lessons import load_lesson
-from app.services.store_interactions.store_chat import get_chat, create_chat, now_local
+from app.services.store_interactions.store_chat import get_chat, create_chat, now_local, chat_lock
 from app.services.model_config import get_client
 from app.services.provider_state import provider_state
 
@@ -54,6 +54,7 @@ def _ensure_system_prompt(state: ChatState, chat_model: ChatModel) -> None:
 def _merge_latest(state: ChatState) -> ChatState:
     """
     Re-read the chat file and put this turn's messages on top of it.
+    Call this inside `with chat_lock:` together with the save that follows.
 
     `state` was loaded before streaming started. While the tutor was answering,
     the learner may have logged an event (tabu guess, end reason) that is already
@@ -73,16 +74,17 @@ def _terminate_on_failure(state: ChatState, exc: Exception) -> None:
     Also records provider_terminated as the end reason, unless one is already set.
     Persists the updated state.
     """
-    latest = _merge_latest(state)
-    latest.status = "terminated"
-    latest.terminated_reason = f"{type(exc).__name__}: {exc}"
+    with chat_lock:
+        latest = _merge_latest(state)
+        latest.status = "terminated"
+        latest.terminated_reason = f"{type(exc).__name__}: {exc}"
 
-    # first reason wins, e.g. a chat that was already user_ended stays user_ended
-    if latest.ended_reason is None:
-        latest.ended_reason = "provider_terminated"
-        latest.ended_at = now_local()
+        # first reason wins, e.g. a chat that was already user_ended stays user_ended
+        if latest.ended_reason is None:
+            latest.ended_reason = "provider_terminated"
+            latest.ended_at = now_local()
 
-    create_chat(latest)
+        create_chat(latest)
 
     # Only flip ProviderState if this was the primary that failed.
     # Anthropic failures don't trigger failover (there's nowhere to fail over to).
@@ -125,8 +127,9 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
         state.messages.append(
             ChatMessage(role="assistant", content="".join(collected))
         )
-        # save on top of the latest file, so events logged during streaming survive
-        create_chat(_merge_latest(state))
+        # re-read and save as one step, so events logged during streaming survive
+        with chat_lock:
+            create_chat(_merge_latest(state))
         yield "data: [DONE]\n\n"
 
     except Exception as exc:

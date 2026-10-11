@@ -1,6 +1,9 @@
 """
 Chat endpoints.
 Handles chat lifecycle: creation, tutor opener, message turns, logging events, and cleanup.
+
+Every read-change-write on a chat file happens inside `with chat_lock:`,
+so two requests for the same chat can never overwrite each other (see store_chat).
 """
 import random
 import uuid
@@ -20,7 +23,9 @@ from app.services.chat import start_chat, handle_message
 from app.services.load_lessons import load_lesson
 from app.services.model_config import settings
 from app.services.provider_state import provider_state # for fallback logic
-from app.services.store_interactions.store_chat import create_chat, get_chat, save_chat, now_local
+from app.services.store_interactions.store_chat import (
+    create_chat, get_chat, save_chat, now_local, chat_lock,
+)
 
 router = APIRouter()
 
@@ -39,22 +44,28 @@ def _new_tabu_state(lesson_id: str | None) -> TabuState | None:
     return TabuState(secret_word=card.word, forbidden_words=card.forbidden_words)
 
 
-def _record_tabu_violations(state: ChatState, message: ChatMessage) -> None:
+def _record_tabu_violations(chat_id: str, message: ChatMessage) -> None:
     """
     Save every forbidden word used in the learner's message.
     Same rule as useTabuGame: case-insensitive, word found anywhere in the text.
+    Loads the chat inside the lock, so it always works on the newest file.
     """
-    text = message.content.lower()
-    hits = [word for word in state.tabu.forbidden_words if word.lower() in text]
-    if not hits:
-        return
+    with chat_lock:
+        state = get_chat(chat_id)
+        if state is None or state.tabu is None:
+            return
 
-    now = now_local()
-    for word in hits:
-        state.tabu.violations.append(
-            TabuViolation(word=word, message_id=message.id, created_at=now)
-        )
-    save_chat(state)
+        text = message.content.lower()
+        hits = [word for word in state.tabu.forbidden_words if word.lower() in text]
+        if not hits:
+            return
+
+        now = now_local()
+        for word in hits:
+            state.tabu.violations.append(
+                TabuViolation(word=word, message_id=message.id, created_at=now)
+            )
+        save_chat(state)
 
 
 @router.post("/chat")
@@ -84,6 +95,7 @@ async def create_chat_endpoint(req: CreateChatRequest):
         tabu=_new_tabu_state(req.lesson_id),
         restarted_from=req.restarted_from,  # old chat_id when the learner pressed restart
     )
+    # a brand-new file, so nothing to merge with. save_chat takes the lock itself.
     create_chat(state)
     return {
         "chat_id": chat_id,
@@ -140,7 +152,7 @@ def chat_message(req: ChatMessageRequest):
         )
 
     if state.tabu is not None and req.message.role == "user" and not req.message.synthetic:
-        _record_tabu_violations(state, req.message)
+        _record_tabu_violations(req.chat_id, req.message)
 
     return StreamingResponse(
         handle_message(chat_id=req.chat_id, message=req.message),
@@ -155,16 +167,17 @@ def log_chat_end(chat_id: str, req: EndChatRequest):
     Log how the chat ended (see ChatEndReason).
     The first reason wins, e.g. left_page after user_ended changes nothing.
     """
-    state = get_chat(chat_id)
-    if not state:
-        raise HTTPException(status_code=404, detail="Chat not found")
+    with chat_lock:
+        state = get_chat(chat_id)
+        if not state:
+            raise HTTPException(status_code=404, detail="Chat not found")
 
-    if state.ended_reason is None:
-        state.ended_reason = req.reason
-        state.ended_at = now_local()
-        save_chat(state)
+        if state.ended_reason is None:
+            state.ended_reason = req.reason
+            state.ended_at = now_local()
+            save_chat(state)
 
-    return {"ended_reason": state.ended_reason}
+        return {"ended_reason": state.ended_reason}
 
 
 @router.post("/chat/{chat_id}/tabu/guessed")
@@ -173,23 +186,24 @@ def log_tabu_guessed(chat_id: str, req: TabuGuessRequest):
     Log that the learner confirmed the tutor guessed the secret word.
     Only the first confirmation counts.
     """
-    state = get_chat(chat_id)
-    if not state:
-        raise HTTPException(status_code=404, detail="Chat not found")
-    if state.tabu is None:
-        raise HTTPException(status_code=400, detail="Not a tabu chat")
+    with chat_lock:
+        state = get_chat(chat_id)
+        if not state:
+            raise HTTPException(status_code=404, detail="Chat not found")
+        if state.tabu is None:
+            raise HTTPException(status_code=400, detail="Not a tabu chat")
 
-    if not state.tabu.guessed:
-        state.tabu.guessed = True
-        state.tabu.guessed_at = now_local()
-        state.tabu.guess_source = req.source
-        state.tabu.guessed_at_user_turn = sum(
-            1 for m in state.messages if m.role == "user" and not m.synthetic
-        )
-        state.tabu.guessed_after_message_id = state.messages[-1].id if state.messages else None
-        save_chat(state)
+        if not state.tabu.guessed:
+            state.tabu.guessed = True
+            state.tabu.guessed_at = now_local()
+            state.tabu.guess_source = req.source
+            state.tabu.guessed_at_user_turn = sum(
+                1 for m in state.messages if m.role == "user" and not m.synthetic
+            )
+            state.tabu.guessed_after_message_id = state.messages[-1].id if state.messages else None
+            save_chat(state)
 
-    return {"guessed": True, "guess_source": state.tabu.guess_source}
+        return {"guessed": True, "guess_source": state.tabu.guess_source}
 
 
 @router.delete("/chat/{chat_id}")

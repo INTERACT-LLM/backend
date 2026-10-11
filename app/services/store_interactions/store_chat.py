@@ -3,7 +3,7 @@ JSON-file store for chats.
 
 Layout:
     storage/chats/<date>/<username>_<browser_id>/<chat_id>.json             (this file)
-    storage/chats/<date>/<username>_<browser_id>/<chat_id>.feedback.jsonl   (store_feedback)
+    storage/chats/<date>/<username>_<browser_id>/<chat_id>.feedback.json    (store_feedback)
 
 The browser_id is a random id the frontend creates once per browser and keeps in
 localStorage. Only its first 8 characters go in the folder name, so two participants
@@ -21,11 +21,17 @@ It holds the full ChatState: messages, the chat's frozen config (lesson, model,
 learner profile), timestamps, and any fields added to ChatState or ChatMessage later.
 Merging chats with feedback happens during data analysis, not here.
 On failure in saving, logs error.
+
+Concurrency: any code that reads a chat, changes it and saves it again must hold
+chat_lock for all three steps, so two requests can never overwrite each other.
+One lock for all chats is enough, because each hold lasts milliseconds.
+Requires a single uvicorn worker.
 """
 
 import logging
 import re
 import tempfile
+import threading
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -41,6 +47,11 @@ CHATS_DIR.mkdir(parents=True, exist_ok=True)
 TIMEZONE = ZoneInfo("Europe/Copenhagen")
 
 BROWSER_ID_CHARS = 8  # how much of the browser id goes in the folder name
+
+# one lock for every read-change-write on a chat file.
+# RLock ("re-entrant"): the thread holding it may take it again, so code that
+# holds it can still call save_chat, which takes it too.
+chat_lock = threading.RLock()
 
 
 # get values
@@ -105,28 +116,31 @@ def _path_for(state: ChatState) -> Path:
 def save_chat(state: ChatState) -> bool:
     """
     Write the full state to disk, replacing any previous version atomically.
-    Returns True on success. On failure, logs the error and returns False.
+    Holds chat_lock while writing, so a save never runs during another
+    read-change-write. Returns True on success. On failure, logs the error
+    and returns False.
     """
     tmp_path: Path | None = None
-    try:
-        _set_timestamps(state)
-        path = _path_for(state)
-        path.parent.mkdir(parents=True, exist_ok=True)
+    with chat_lock:
+        try:
+            _set_timestamps(state)
+            path = _path_for(state)
+            path.parent.mkdir(parents=True, exist_ok=True)
 
-        with tempfile.NamedTemporaryFile(
-            "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
-        ) as tmp:
-            tmp_path = Path(tmp.name)
-            tmp.write(state.model_dump_json(indent=2))
+            with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+            ) as tmp:
+                tmp_path = Path(tmp.name)
+                tmp.write(state.model_dump_json(indent=2))
 
-        tmp_path.replace(path)
-        return True
+            tmp_path.replace(path)
+            return True
 
-    except Exception:
-        logger.exception("Could not save chat %s", state.chat_id)
-        if tmp_path is not None:
-            tmp_path.unlink(missing_ok=True)
-        return False
+        except Exception:
+            logger.exception("Could not save chat %s", state.chat_id)
+            if tmp_path is not None:
+                tmp_path.unlink(missing_ok=True)
+            return False
 
 
 # kept so existing imports (chat_service, routers) keep working.
