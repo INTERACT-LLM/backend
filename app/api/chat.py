@@ -198,9 +198,7 @@ def log_tabu_guessed(chat_id: str, req: TabuGuessRequest):
             state.tabu.guessed = True
             state.tabu.guessed_at = now_local()
             state.tabu.guess_source = req.source
-            state.tabu.guessed_at_user_turn = sum(
-                1 for m in state.messages if m.role == "user" and not m.synthetic
-            )
+            state.tabu.guessed_at_user_turn = state.n_user_turns  # same rule as the saved count
             state.tabu.guessed_after_message_id = state.messages[-1].id if state.messages else None
             save_chat(state)
 

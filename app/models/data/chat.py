@@ -14,12 +14,18 @@ how the chat ended. The first reason that arrives is kept.
 TabuGuessSource
 - "nudge": answered yes to the "Did the tutor guess it?" popup
 - "manual": pressed the "Tutor guessed it!" button themselves
+
+n_user_turns
+number of real learner messages (synthetic tutor-start prompts not counted).
+Computed from messages whenever it is read or saved, so it is always correct.
+Appears at the end of the JSON, after messages (Pydantic writes computed fields last).
+0 means the learner opened the chat but never wrote anything.
 """
 from datetime import datetime
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 from app.models.environments.user import UserProfile
 
@@ -112,6 +118,12 @@ class ChatState(BaseModel):
     tabu: TabuState | None = None
 
     messages: list[ChatMessage] = []
+
+    @computed_field
+    @property
+    def n_user_turns(self) -> int:
+        """Real learner messages so far. Written to the JSON, never read back from it."""
+        return sum(1 for m in self.messages if m.role == "user" and not m.synthetic)
 
 
 class CreateChatRequest(BaseModel):
