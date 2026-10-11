@@ -3,6 +3,9 @@ Background task that monitors primary provider health and updates ProviderState.
 
 Pings the configured primary on a schedule. Anthropic is never pinged. 
 Anthropic's health is only discovered when a real chat attempts to use it (since it would cost money and it is a fallback.)
+
+The ProviderState flips are plain function calls (no await): they only set two
+attributes under a threading.Lock, so they finish instantly and never block the loop.
 """
 import asyncio
 
@@ -45,11 +48,11 @@ async def monitor_primary_health() -> None:
             online = await _check_primary_once()
 
             if online and provider_state.is_failed_over:
-                await provider_state.mark_primary_recovered()
+                provider_state.mark_primary_recovered()
             elif not online and not provider_state.is_failed_over:
                 # Primary is down but we haven't failed over yet
                 # (e.g., no user request has triggered it). Flip proactively.
-                await provider_state.mark_primary_failed()
+                provider_state.mark_primary_failed()
 
             await asyncio.sleep(interval)
     except asyncio.CancelledError:

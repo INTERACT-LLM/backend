@@ -4,6 +4,7 @@ Init FastAPI
 import asyncio
 from contextlib import asynccontextmanager
 
+from anyio import to_thread
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,9 +14,18 @@ from app.api.feedback import router as feedback_router
 from app.api.llm import router as llm_router
 from app.services.health_monitor import monitor_primary_health
 
+# how many requests can run in threads at once (def endpoints and streaming).
+# default is 40. Each active learner can use ~2 at peak (chat stream + feedback),
+# so 100 leaves room for 30+ learners. Unused threads cost nothing.
+THREAD_LIMIT = 100
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: raise the thread limit. Must happen here, once the server is running,
+    # because the limit belongs to the running event loop.
+    to_thread.current_default_thread_limiter().total_tokens = THREAD_LIMIT
+
     # Startup: launch the background primary-health monitor.
     health_task = asyncio.create_task(monitor_primary_health())
     try:

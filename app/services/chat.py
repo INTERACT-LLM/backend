@@ -88,15 +88,9 @@ def _terminate_on_failure(state: ChatState, exc: Exception) -> None:
 
     # Only flip ProviderState if this was the primary that failed.
     # Anthropic failures don't trigger failover (there's nowhere to fail over to).
+    # A plain call: provider_state is thread-safe, and this runs in a worker thread.
     if state.config.provider == provider_state.primary:
-        # Fire-and-forget: this is sync code, schedule the async flip.
-        import asyncio
-        try:
-            loop = asyncio.get_event_loop()
-            loop.create_task(provider_state.mark_primary_failed())
-        except RuntimeError:
-            # No running loop (shouldn't happen in FastAPI request context, but be safe).
-            asyncio.run(provider_state.mark_primary_failed())
+        provider_state.mark_primary_failed()
 
 
 def _stream_response(state: ChatState) -> Generator[str, None, None]:
