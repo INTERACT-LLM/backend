@@ -74,7 +74,7 @@ async def get_game_state(lesson_id: str, chat_id: str = Query(...)):
 async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
     """
     Build the prompts for display in the ui. No llm is called here.
-    Uses the model this chat is bound to, so the shown prompt matches what the chat uses.
+    Uses this chat's frozen config, so the shown prompt matches what the chat uses.
     """
     if lesson_id == "undefined" or not lesson_id:
         raise HTTPException(status_code=400, detail="lesson_id is required")
@@ -88,13 +88,11 @@ async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
         raise HTTPException(status_code=404, detail="Lesson or chat not found")
 
     chat_model = ChatModel(
-        config=chat_state.config,  
+        config=chat_state.config,
         chat_id=chat_state.chat_id,
         lesson_config=lesson,
-        model_id=chat_state.config.model,  
     )
     immediate_feedback_model = FeedbackModel(
-        model_id=chat_state.config.model,  
         config=chat_state.config,
         lesson_config=lesson,
     )

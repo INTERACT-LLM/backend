@@ -71,6 +71,7 @@ class ChatConfig(BaseModel):
     tutor_starts: bool = False
 
     # provider binding: immutable for the chat's lifetime.
+    # model is the one every call for this chat uses (chat and feedback).
     provider: ProviderName
     model: str
 
@@ -116,7 +117,6 @@ class ChatState(BaseModel):
 class CreateChatRequest(BaseModel):
     lesson_id: str | None = None
     tutor_starts: bool = False
-    model_id: str | None = None
     user_profile: UserProfile
     restarted_from: str | None = None  # old chat_id when this chat comes from a restart
 

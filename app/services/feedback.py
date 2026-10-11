@@ -3,7 +3,7 @@ Feedback service (separate API call from chat endpoint)
 
 Structured feedback response using OpenAI-compatible API (Ollama or vLLM or Anthropic).
 Provider and model are inherited from the chat the feedback is generated for —
-feedback uses the same provider as the conversation it analyses.
+feedback uses the same provider and model (state.config.model) as the conversation it analyses.
 
 Both feedback functions always return a dict with feedback_status "success" or "error",
 so the frontend can stop loading in both cases.
@@ -41,8 +41,7 @@ def _load_feedback_model(
     )
 
     feedback_model = FeedbackModel(
-        model_id=state.config.model,  
-        config=state.config,  
+        config=state.config,
         lesson_config=lesson_config,
         **kwargs,
     )
@@ -91,9 +90,9 @@ def generate_immediate_feedback(
         llm_user_message,
     ]
 
-    client, resolved_model = get_client(state.config.provider)  
+    client, _ = get_client(state.config.provider)
     try:
-        response = client.chat.completions.create(model=resolved_model, messages=messages)
+        response = client.chat.completions.create(model=state.config.model, messages=messages)
     except Exception as e:
         return {
             "FeedbackResponse": None,
@@ -132,10 +131,10 @@ def generate_general_feedback(
 
     print(f"general_feedback_prompt:\n{feedback_model.general_feedback_prompt}")
 
-    client, resolved_model = get_client(state.config.provider)  
+    client, _ = get_client(state.config.provider)
     try:
         response = client.chat.completions.create(
-            model=resolved_model,
+            model=state.config.model,
             messages=[{"role": "user", "content": feedback_model.general_feedback_prompt}],
         )
     except Exception as e:

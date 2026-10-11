@@ -4,6 +4,7 @@ History is stored in ChatState via store_chat.
 System prompt is built once from the chat's frozen config.
 
 Provider and model are bound to the chat at creation time (see ChatConfig).
+Every call uses state.config.model, so the saved model is always the one that answered.
 If the bound provider fails mid-conversation, the chat is terminated; the
 user must start a new chat (which will bind to whichever provider is then active).
 
@@ -29,7 +30,7 @@ INTERNAL_FIELDS = {"synthetic", "id"}
 
 
 def _build_chat_model(state: ChatState) -> ChatModel:
-    """Build a ChatModel from the chat's config and lesson. Called once per chat."""
+    """Build a ChatModel (system prompt) from the chat's config and lesson."""
     lesson = (
         load_lesson(lesson_path=LESSONS_DIR / f"{state.config.lesson_id}.toml")
         if state.config.lesson_id
@@ -39,7 +40,6 @@ def _build_chat_model(state: ChatState) -> ChatModel:
         config=state.config,
         chat_id=state.chat_id,  # seed for the 20Q secret, same as the game-state endpoint
         lesson_config=lesson,
-        model_id=state.config.model,
     )
 
 
@@ -103,9 +103,10 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
     """
     provider = state.config.provider #read once, used below
     try:
-        client, resolved_model = get_client(provider)
+        # the model comes from the chat's saved config, so saved and used always match
+        client, _ = get_client(provider)
         stream = client.chat.completions.create(
-            model=resolved_model,
+            model=state.config.model,
             messages=[m.model_dump(exclude=INTERNAL_FIELDS) for m in state.messages],
             stream=True,
             max_tokens=400,

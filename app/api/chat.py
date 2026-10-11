@@ -73,14 +73,15 @@ async def create_chat_endpoint(req: CreateChatRequest):
     """
     Create a new chat. Freezes everything that shapes the tutor (lesson, model,
     learner profile) into the chat's config, bound to whichever provider is active.
+    The model saved here is the one every later call for this chat uses.
     For tabu lessons, the secret word is picked here and saved with the chat.
     """
-    # Bind to whichever provider is currently active.
+    # Bind to whichever provider is currently active, and that provider's model.
     active = provider_state.active
     if active == "anthropic":
         bound_model = settings.anthropic_model
     else:
-        bound_model = req.model_id or settings.default_model
+        bound_model = settings.default_model
 
     chat_id = f"chat-{uuid.uuid4()}"
     state = ChatState(

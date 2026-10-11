@@ -1,6 +1,7 @@
 """
 Defines how the chat model should behave — config and prompt building only.
 No LLM calls — IO lives in services/chat.py.
+Which model answers is not decided here: services/chat.py gets it from get_client.
 """
 import tomllib
 from pathlib import Path
@@ -25,15 +26,13 @@ class ChatModel:
 
     def __init__(
         self,
-        config: ChatConfig,  
+        config: ChatConfig,
         chat_id: str,
         lesson_config: Lesson | None = None,
-        model_id: str = "llama3.2:3b",
     ):
-        self.config = config  
+        self.config = config
         self.chat_id = chat_id
         self.lesson_config = lesson_config
-        self.model_id = model_id
 
         config_path = CHAT_CONFIG_PATH if lesson_config else FREE_CHAT_CONFIG_PATH
         with open(config_path, "rb") as f:
@@ -42,7 +41,7 @@ class ChatModel:
         self.system_prompt = self._build_system_prompt()
 
     def _build_system_prompt(self) -> str:
-        config = self.config  
+        config = self.config
 
         base = self._chat_config["system_prompt"].format(
             language=config.language,
