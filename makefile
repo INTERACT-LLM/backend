@@ -22,3 +22,6 @@ dev:
 
 prod:
 	.venv/bin/uvicorn app.main:app --env-file .env.prod
+
+run_load_test:
+	bash tests/run_load_test.sh

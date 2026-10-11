@@ -21,13 +21,13 @@ def get_models():
 async def get_status():
     """
     Report current provider state. Reads from ProviderState (kept fresh by the
-    background health monitor) — no live HTTP probing here.
+    background health monitor and by failing chats). No live HTTP probing here.
     """
     return {
         "configured_provider": provider_state.primary,
         "active_provider":     provider_state.active,
         "is_failed_over":      provider_state.is_failed_over,
-        "primary_online":      not provider_state.is_failed_over,
+        "primary_online":      provider_state.primary_online,
         "fallback_available":  settings.claude_fallback_enabled,
         "fallback_model":      settings.anthropic_model if settings.claude_fallback_enabled else None,
     }

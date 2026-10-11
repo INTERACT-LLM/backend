@@ -2,14 +2,13 @@
 API for getting lesson content and generating lesson plans based on user input.
 """
 from pathlib import Path
-import random
 from fastapi import APIRouter, HTTPException, Query
 from app.models.llms.chat_model import ChatModel
 from app.models.llms.feedback_model import FeedbackModel
 from app.models.environments.lesson import TabuInstructions, TwentyQuestionsInstructions
 from app.services.game_utils import pick_secret_20Q
 from app.services.load_lessons import load_all_lessons, load_lesson
-from app.services.store_chat import get_chat
+from app.services.store_interactions.store_chat import get_chat
 
 router = APIRouter()
 
@@ -49,14 +48,18 @@ async def get_game_state(lesson_id: str, chat_id: str = Query(...)):
     instructions = lesson.lesson_instructions
 
     if isinstance(instructions, TabuInstructions):
-        secret = random.choice(instructions.vocabulary)
+        # the secret word was picked and saved when the chat was created
+        state = get_chat(chat_id)
+        if not state or state.tabu is None:
+            raise HTTPException(status_code=404, detail="No tabu game for this chat")
         return {
             "game_type": "tabu",
-            "secret_word": secret.word,
-            "forbidden_words": secret.forbidden_words,
+            "secret_word": state.tabu.secret_word,
+            "forbidden_words": state.tabu.forbidden_words,
         }
 
     if isinstance(instructions, TwentyQuestionsInstructions):
+        # same seed as ChatModel (the chat_id), so the UI and the tutor agree on the word
         secret = pick_secret_20Q(instructions.vocabulary, chat_id)
         return {
             "game_type": "twenty_questions",
@@ -69,6 +72,10 @@ async def get_game_state(lesson_id: str, chat_id: str = Query(...)):
 
 @router.get("/lessons/{lesson_id}/prompts")
 async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
+    """
+    Build the prompts for display in the ui. No llm is called here.
+    Uses this chat's frozen config, so the shown prompt matches what the chat uses.
+    """
     if lesson_id == "undefined" or not lesson_id:
         raise HTTPException(status_code=400, detail="lesson_id is required")
     if chat_id == "undefined" or not chat_id:
@@ -81,13 +88,12 @@ async def get_system_prompts(lesson_id: str, chat_id: str = Query(...)):
         raise HTTPException(status_code=404, detail="Lesson or chat not found")
 
     chat_model = ChatModel(
-        session_config=chat_state.snapshotted_config,
+        config=chat_state.config,
+        chat_id=chat_state.chat_id,
         lesson_config=lesson,
-        model_id="llama-3.2",
     )
     immediate_feedback_model = FeedbackModel(
-        model_id="llama-3.2",
-        session_config=chat_state.snapshotted_config,
+        config=chat_state.config,
         lesson_config=lesson,
     )
 
