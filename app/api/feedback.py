@@ -14,8 +14,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# plain def, not async def: the LLM call blocks, and FastAPI runs a def endpoint
+# in its own thread, so other learners' requests keep running meanwhile
 @router.post("/feedback/immediate")
-async def get_immediate_feedback(req: ImmediateFeedbackRequest):
+def get_immediate_feedback(req: ImmediateFeedbackRequest):
     result = generate_immediate_feedback(
         req.last_user_message,
         req.lesson_id,
@@ -25,6 +27,7 @@ async def get_immediate_feedback(req: ImmediateFeedbackRequest):
     # Saving must never stop the feedback from reaching the learner.
     try:
         save_feedback(FeedbackRecord(
+            kind="immediate",
             chat_id=req.chat_id,
             message_id=req.message_id,
             user_message=req.last_user_message,
@@ -33,15 +36,30 @@ async def get_immediate_feedback(req: ImmediateFeedbackRequest):
             detail=result.get("detail"),
         ))
     except Exception:
-        logger.exception("Could not build feedback record for chat %s", req.chat_id)
+        logger.exception("Could not build immediate feedback record for chat %s", req.chat_id)
 
     return result
 
 
 @router.post("/feedback/detailed")
-async def get_detailed_feedback(req: DetailedFeedbackRequest):
-    return generate_general_feedback(
+def get_detailed_feedback(req: DetailedFeedbackRequest):
+    result = generate_general_feedback(
         req.messages,
         req.lesson_id,
         req.chat_id,
     )
+
+    # Same rule: saving must never stop the feedback from reaching the learner.
+    try:
+        save_feedback(FeedbackRecord(
+            kind="general",
+            chat_id=req.chat_id,
+            status=result.get("feedback_status", "error"),
+            feedback=result.get("GeneralFeedbackResponse"),
+            detail=result.get("error"),
+            raw_output=result.get("raw_output"),
+        ))
+    except Exception:
+        logger.exception("Could not build general feedback record for chat %s", req.chat_id)
+
+    return result
