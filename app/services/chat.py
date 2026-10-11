@@ -6,6 +6,9 @@ System prompt is built once from the chat's frozen config.
 Provider and model are bound to the chat at creation time (see ChatConfig).
 If the bound provider fails mid-conversation, the chat is terminated; the
 user must start a new chat (which will bind to whichever provider is then active).
+
+Saving after a turn goes through _merge_latest, so events logged while the tutor
+was streaming (tabu guess, end reason) are not overwritten.
 """
 from pathlib import Path
 from collections.abc import Generator
@@ -13,7 +16,7 @@ from collections.abc import Generator
 from app.models.data.chat import ChatMessage, ChatState
 from app.models.llms.chat_model import ChatModel
 from app.services.load_lessons import load_lesson
-from app.services.store_interactions.store_chat import get_chat, create_chat
+from app.services.store_interactions.store_chat import get_chat, create_chat, now_local
 from app.services.model_config import get_client
 from app.services.provider_state import provider_state
 
@@ -28,15 +31,15 @@ INTERNAL_FIELDS = {"synthetic", "id"}
 def _build_chat_model(state: ChatState) -> ChatModel:
     """Build a ChatModel from the chat's config and lesson. Called once per chat."""
     lesson = (
-        load_lesson(lesson_path=LESSONS_DIR / f"{state.config.lesson_id}.toml")  
-        if state.config.lesson_id  
+        load_lesson(lesson_path=LESSONS_DIR / f"{state.config.lesson_id}.toml")
+        if state.config.lesson_id
         else None
     )
     return ChatModel(
-        config=state.config,  
+        config=state.config,
         chat_id=state.chat_id,  # seed for the 20Q secret, same as the game-state endpoint
         lesson_config=lesson,
-        model_id=state.config.model, 
+        model_id=state.config.model,
     )
 
 
@@ -48,18 +51,42 @@ def _ensure_system_prompt(state: ChatState, chat_model: ChatModel) -> None:
         )
 
 
+def _merge_latest(state: ChatState) -> ChatState:
+    """
+    Re-read the chat file and put this turn's messages on top of it.
+
+    `state` was loaded before streaming started. While the tutor was answering,
+    the learner may have logged an event (tabu guess, end reason) that is already
+    in the file. Saving `state` directly would erase it, so we keep the file's
+    version and only replace the messages, which this turn owns.
+    """
+    latest = get_chat(state.chat_id)
+    if latest is None:
+        return state
+    latest.messages = state.messages
+    return latest
+
+
 def _terminate_on_failure(state: ChatState, exc: Exception) -> None:
     """
     Mark the chat terminated and flip ProviderState if the bound provider was primary.
+    Also records provider_terminated as the end reason, unless one is already set.
     Persists the updated state.
     """
-    state.status = "terminated"
-    state.terminated_reason = f"{type(exc).__name__}: {exc}"
-    create_chat(state)
+    latest = _merge_latest(state)
+    latest.status = "terminated"
+    latest.terminated_reason = f"{type(exc).__name__}: {exc}"
+
+    # first reason wins, e.g. a chat that was already user_ended stays user_ended
+    if latest.ended_reason is None:
+        latest.ended_reason = "provider_terminated"
+        latest.ended_at = now_local()
+
+    create_chat(latest)
 
     # Only flip ProviderState if this was the primary that failed.
     # Anthropic failures don't trigger failover (there's nowhere to fail over to).
-    if state.config.provider == provider_state.primary:  
+    if state.config.provider == provider_state.primary:
         # Fire-and-forget: this is sync code, schedule the async flip.
         import asyncio
         try:
@@ -98,7 +125,8 @@ def _stream_response(state: ChatState) -> Generator[str, None, None]:
         state.messages.append(
             ChatMessage(role="assistant", content="".join(collected))
         )
-        create_chat(state)
+        # save on top of the latest file, so events logged during streaming survive
+        create_chat(_merge_latest(state))
         yield "data: [DONE]\n\n"
 
     except Exception as exc:

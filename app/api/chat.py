@@ -1,6 +1,6 @@
 """
 Chat endpoints.
-Handles chat lifecycle: creation, tutor opener, message turns, and cleanup.
+Handles chat lifecycle: creation, tutor opener, message turns, logging events, and cleanup.
 """
 import random
 import uuid
@@ -11,7 +11,8 @@ from fastapi.responses import StreamingResponse
 
 from app.models.data.chat import (
     CreateChatRequest, ChatMessageRequest, StartChatRequest,
-    ChatState, ChatConfig, ChatMessage, TabuState, TabuViolation,  
+    EndChatRequest, TabuGuessRequest,
+    ChatState, ChatConfig, ChatMessage, TabuState, TabuViolation,
 )
 from app.models.environments.lesson import TabuInstructions
 from app.models.llms.chat_model import ChatModel
@@ -81,6 +82,7 @@ async def create_chat_endpoint(req: CreateChatRequest):
             user=req.user_profile,
         ),
         tabu=_new_tabu_state(req.lesson_id),
+        restarted_from=req.restarted_from,  # old chat_id when the learner pressed restart
     )
     create_chat(state)
     return {
@@ -147,6 +149,49 @@ def chat_message(req: ChatMessageRequest):
     )
 
 
+@router.post("/chat/{chat_id}/end")
+def log_chat_end(chat_id: str, req: EndChatRequest):
+    """
+    Log how the chat ended (see ChatEndReason).
+    The first reason wins, e.g. left_page after user_ended changes nothing.
+    """
+    state = get_chat(chat_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    if state.ended_reason is None:
+        state.ended_reason = req.reason
+        state.ended_at = now_local()
+        save_chat(state)
+
+    return {"ended_reason": state.ended_reason}
+
+
+@router.post("/chat/{chat_id}/tabu/guessed")
+def log_tabu_guessed(chat_id: str, req: TabuGuessRequest):
+    """
+    Log that the learner confirmed the tutor guessed the secret word.
+    Only the first confirmation counts.
+    """
+    state = get_chat(chat_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    if state.tabu is None:
+        raise HTTPException(status_code=400, detail="Not a tabu chat")
+
+    if not state.tabu.guessed:
+        state.tabu.guessed = True
+        state.tabu.guessed_at = now_local()
+        state.tabu.guess_source = req.source
+        state.tabu.guessed_at_user_turn = sum(
+            1 for m in state.messages if m.role == "user" and not m.synthetic
+        )
+        state.tabu.guessed_after_message_id = state.messages[-1].id if state.messages else None
+        save_chat(state)
+
+    return {"guessed": True, "guess_source": state.tabu.guess_source}
+
+
 @router.delete("/chat/{chat_id}")
 async def end_chat(chat_id: str):
     """End a chat. The saved JSON file stays on disk."""
@@ -161,7 +206,7 @@ async def get_free_chat_prompt(chat_id: str = Query(...)):
         raise HTTPException(status_code=404, detail="Chat not found")
 
     chat_model = ChatModel(
-        config=state.config,  
+        config=state.config,
         chat_id=state.chat_id,
         lesson_config=None,
     )
