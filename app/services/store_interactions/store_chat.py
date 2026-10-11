@@ -1,9 +1,9 @@
 """
 JSON-file store for chats.
 
-Layout:
-    storage/chats/<date>/<username>_<browser_id>/<chat_id>.json             (this file)
-    storage/chats/<date>/<username>_<browser_id>/<chat_id>.feedback.json    (store_feedback)
+Layout (the chats dir is decided in set_storage: Python setter, env file, or default):
+    <chats dir>/<date>/<username>_<browser_id>/<chat_id>.json             (this file)
+    <chats dir>/<date>/<username>_<browser_id>/<chat_id>.feedback.json    (store_feedback)
 
 The browser_id is a random id the frontend creates once per browser and keeps in
 localStorage. Only its first 8 characters go in the folder name, so two participants
@@ -37,12 +37,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from app.models.data.chat import ChatState
+from .set_storage import get_chats_dir
 
 logger = logging.getLogger(__name__)
-
-# setup stuff (path + timezone)
-CHATS_DIR = Path(__file__).parents[4] / "storage" / "chats"
-CHATS_DIR.mkdir(parents=True, exist_ok=True)
 
 TIMEZONE = ZoneInfo("Europe/Copenhagen")
 
@@ -91,7 +88,7 @@ def _set_timestamps(state: ChatState) -> None:
 # pathing
 def find_chat_path(chat_id: str) -> Path | None:
     """Locate an existing chat file when only the chat_id is known."""
-    matches = list(CHATS_DIR.glob(f"*/*/{_safe(chat_id)}.json"))
+    matches = list(get_chats_dir().glob(f"*/*/{_safe(chat_id)}.json"))
     return matches[0] if matches else None
 
 
@@ -105,7 +102,7 @@ def _path_for(state: ChatState) -> Path:
     if existing is not None:
         return existing
     return (
-        CHATS_DIR
+        get_chats_dir()
         / state.created_at.date().isoformat()
         / _user_folder(state)
         / f"{_safe(state.chat_id)}.json"
