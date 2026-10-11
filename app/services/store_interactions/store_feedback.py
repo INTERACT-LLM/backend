@@ -3,7 +3,7 @@ JSON store for feedback, both immediate (per message) and general (end of chat).
 Lives next to the chat file:
     storage/chats/<date>/<username>_<browser_id>/<chat_id>.feedback.json
 The file holds one list of records, oldest first, each marked by kind
-("immediate" or "general").
+("immediate" or "general"). Every record has the same fields; empty ones are null.
 
 Adding a record reads the list, appends, and writes the whole file back,
 replacing it atomically (same approach as store_chat), so a crash never
@@ -71,6 +71,7 @@ def save_feedback(record: FeedbackRecord) -> bool:
             records = get_feedback(record.chat_id)
             records.append(record)
 
+            # dump_json writes UTF-8, so Spanish characters stay readable (ñ, not \u00f1)
             with tempfile.NamedTemporaryFile(
                 "wb", dir=path.parent, suffix=".tmp", delete=False
             ) as tmp:

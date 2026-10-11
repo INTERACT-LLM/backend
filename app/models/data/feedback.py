@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 TIMEZONE = ZoneInfo("Europe/Copenhagen")
 
@@ -37,17 +37,21 @@ class DetailedFeedbackRequest(BaseModel):
 
 class FeedbackRecord(BaseModel):
     """
-    One line in <chat_id>.feedback.jsonl.
+    One entry in the list in <chat_id>.feedback.json.
     Immediate records link to their message in <chat_id>.json through message_id.
     General records cover the whole chat, so they have no message_id.
+    Every record has all fields; empty ones are saved as null.
+    The model used is not stored here: it is always the chat's config.model.
     """
-    kind: FeedbackKind = "immediate"         # lines saved before this field existed are immediate
+    kind: FeedbackKind = "immediate"         # records saved before this field existed are immediate
     chat_id: str
     message_id: str | None = None            # immediate only
     user_message: dict | None = None         # immediate only, stored as sent by the frontend
     status: str                              # "success" or "error"
-    feedback: FeedbackResponse | GeneralFeedbackResponse | None = None  # None when feedback failed
-    detail: str | None = None                # error message, if any
-    raw_output: str | None = None            # general only, the model's text, kept even if parsing failed
-    model: str | None = None
+    feedback: FeedbackResponse | GeneralFeedbackResponse | None = None  # null when feedback failed
+
+    # why feedback failed. Older records called this "detail", so both names are read.
+    error: str | None = Field(default=None, validation_alias=AliasChoices("error", "detail"))
+
+    raw_output: str | None = None            # the model's text, only when parsing it failed
     created_at: datetime | None = None

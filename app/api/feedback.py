@@ -14,6 +14,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _raw_if_failed(result: dict) -> str | None:
+    """Keep the model's raw text only when parsing failed. On success, `feedback` holds it already."""
+    if result.get("feedback_status") == "success":
+        return None
+    return result.get("raw_output")
+
+
 # plain def, not async def: the LLM call blocks, and FastAPI runs a def endpoint
 # in its own thread, so other learners' requests keep running meanwhile
 @router.post("/feedback/immediate")
@@ -33,7 +40,8 @@ def get_immediate_feedback(req: ImmediateFeedbackRequest):
             user_message=req.last_user_message,
             status=result.get("feedback_status", "error"),
             feedback=result.get("FeedbackResponse"),
-            detail=result.get("detail"),
+            error=result.get("error"),
+            raw_output=_raw_if_failed(result),
         ))
     except Exception:
         logger.exception("Could not build immediate feedback record for chat %s", req.chat_id)
@@ -56,8 +64,8 @@ def get_detailed_feedback(req: DetailedFeedbackRequest):
             chat_id=req.chat_id,
             status=result.get("feedback_status", "error"),
             feedback=result.get("GeneralFeedbackResponse"),
-            detail=result.get("error"),
-            raw_output=result.get("raw_output"),
+            error=result.get("error"),
+            raw_output=_raw_if_failed(result),
         ))
     except Exception:
         logger.exception("Could not build general feedback record for chat %s", req.chat_id)
